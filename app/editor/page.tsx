@@ -2,8 +2,10 @@ import { chatGPTSignInPath, chatGPTSignOutPath, getChatGPTUser } from "../chatgp
 import { OWNER_USER_ID } from "../../lib/editor-auth";
 import EditorClient from "./editor-client";
 import Link from "next/link";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
+export const metadata:Metadata={robots:{index:false,follow:false,nocache:true}};
 
 export default async function EditorPage(){
   const user=await getChatGPTUser();
