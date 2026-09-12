@@ -11,6 +11,12 @@
       "database_id": "3d22c8a5-11d8-4bfa-be4d-5e9ef21d5f5f"
     }
   ],
+  "r2_buckets": [
+    {
+      "binding": "BUCKET",
+      "bucket_name": "alejandro-urvieta-portfolio-media"
+    }
+  ],
   "vars": {
     "OWNER_EMAIL": "alejandroug2608@gmail.com",
     "ACCESS_ENABLED": "false"
