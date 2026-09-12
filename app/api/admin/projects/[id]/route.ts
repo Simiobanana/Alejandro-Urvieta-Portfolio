@@ -1,6 +1,7 @@
 import { eq, sql } from "drizzle-orm";
-import { getDb } from "../../../../db";
-import { projects } from "../../../../db/schema";
-import { requireEditor } from "../../../../lib/editor-auth";
+import { getDb } from "../../../../../db";
+import { projects } from "../../../../../db/schema";
+import { requireEditor } from "../../../../../lib/editor-auth";
+
 export async function DELETE(request:Request,context:{params:Promise<{id:string}>}){const access=await requireEditor(request);if(!access.ok)return Response.json({error:access.message},{status:access.status});const{id}=await context.params;await getDb().delete(projects).where(eq(projects.id,Number(id)));return Response.json({deleted:Number(id)});}
 export async function PUT(request:Request,context:{params:Promise<{id:string}>}){const access=await requireEditor(request);if(!access.ok)return Response.json({error:access.message},{status:access.status});const{id}=await context.params,body=await request.json() as Record<string,unknown>;const values:Partial<typeof projects.$inferInsert>={updatedAt:sql`CURRENT_TIMESTAMP`};for(const key of ["title","titleEs","category","description","descriptionEs","outcome","outcomeEs","href","repo","mediaUrl","mediaType","mediaAlt"] as const)if(key in body)Object.assign(values,{[key]:body[key]?String(body[key]):null});if("stack"in body)values.stack=JSON.stringify(Array.isArray(body.stack)?body.stack:[]);if("details"in body)values.details=JSON.stringify(Array.isArray(body.details)?body.details:[]);if("detailsEs"in body)values.detailsEs=JSON.stringify(Array.isArray(body.detailsEs)?body.detailsEs:[]);if("featured"in body)values.featured=Boolean(body.featured);if("published"in body)values.published=Boolean(body.published);if("sortOrder"in body)values.sortOrder=Number(body.sortOrder);const[project]=await getDb().update(projects).set(values).where(eq(projects.id,Number(id))).returning();return Response.json({project});}

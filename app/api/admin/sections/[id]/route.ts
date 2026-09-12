@@ -1,6 +1,7 @@
 import { eq, sql } from "drizzle-orm";
-import { getDb } from "../../../../db";
-import { customSections } from "../../../../db/schema";
-import { requireEditor } from "../../../../lib/editor-auth";
+import { getDb } from "../../../../../db";
+import { customSections } from "../../../../../db/schema";
+import { requireEditor } from "../../../../../lib/editor-auth";
+
 export async function DELETE(request:Request,context:{params:Promise<{id:string}>}){const access=await requireEditor(request);if(!access.ok)return Response.json({error:access.message},{status:access.status});const{id}=await context.params;await getDb().delete(customSections).where(eq(customSections.id,Number(id)));return Response.json({deleted:Number(id)})}
 export async function PUT(request:Request,context:{params:Promise<{id:string}>}){const access=await requireEditor(request);if(!access.ok)return Response.json({error:access.message},{status:access.status});const{id}=await context.params,body=await request.json() as Record<string,unknown>;const values:Partial<typeof customSections.$inferInsert>={updatedAt:sql`CURRENT_TIMESTAMP`};for(const key of ["eyebrowEn","eyebrowEs","titleEn","titleEs","bodyEn","bodyEs","linkLabelEn","linkLabelEs","href","mediaUrl","mediaType"] as const)if(key in body)Object.assign(values,{[key]:body[key]?String(body[key]):null});if("published"in body)values.published=Boolean(body.published);if("sortOrder"in body)values.sortOrder=Number(body.sortOrder);const[section]=await getDb().update(customSections).set(values).where(eq(customSections.id,Number(id))).returning();return Response.json({section})}

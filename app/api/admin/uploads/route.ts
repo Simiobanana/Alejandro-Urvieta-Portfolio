@@ -1,3 +1,4 @@
 import { env } from "cloudflare:workers";
-import { requireEditor } from "../../../lib/editor-auth";
+import { requireEditor } from "../../../../lib/editor-auth";
+
 export async function POST(request:Request){const access=await requireEditor(request);if(!access.ok)return Response.json({error:access.message},{status:access.status});if(!env.BUCKET)return Response.json({error:"El almacenamiento aún no está disponible."},{status:503});const form=await request.formData(),file=form.get("file");if(!(file instanceof File))return Response.json({error:"Selecciona un archivo."},{status:400});if(!file.type.startsWith("image/")&&!file.type.startsWith("video/"))return Response.json({error:"Solo se permiten imágenes y videos."},{status:415});if(file.size>90*1024*1024)return Response.json({error:"El archivo supera el límite de 90 MB."},{status:413});const safe=file.name.replace(/[^a-zA-Z0-9._-]/g,"-"),key=`portfolio/${Date.now()}-${crypto.randomUUID()}-${safe}`;await env.BUCKET.put(key,file.stream(),{httpMetadata:{contentType:file.type}});return Response.json({key,url:`/media/${key}`,type:file.type});}
