@@ -15,7 +15,7 @@ export async function GET() {
   catch (error) { return Response.json({ projects: [], error: error instanceof Error ? error.message : "Database unavailable" }); }
 }
 export async function POST(request: Request) {
-  const access = await requireEditor(); if (!access.ok) return Response.json({ error: access.message }, { status: access.status });
+  const access = await requireEditor(request); if (!access.ok) return Response.json({ error: access.message }, { status: access.status });
   const body = await request.json() as Record<string, unknown>, title = String(body.title ?? "").trim(), description = String(body.description ?? "").trim();
   if (!title || !description) return Response.json({ error: "El título y la descripción en inglés son obligatorios." }, { status: 400 });
   const tags = Array.isArray(body.stack) ? body.stack.map(String).filter(Boolean) : String(body.stack ?? "").split(",").map((v) => v.trim()).filter(Boolean);

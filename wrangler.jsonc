@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "alejandro-urvieta-portfolio",
+  "main": "vinext/server/fetch-handler",
+  "compatibility_date": "2026-05-15",
+  "compatibility_flags": ["nodejs_compat"],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "alejandro-urvieta-portfolio",
+      "database_id": "3d22c8a5-11d8-4bfa-be4d-5e9ef21d5f5f"
+    }
+  ],
+  "vars": {
+    "OWNER_EMAIL": "alejandroug2608@gmail.com",
+    "ACCESS_ENABLED": "false"
+  },
+  "observability": { "enabled": true }
+}

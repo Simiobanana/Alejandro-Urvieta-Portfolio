@@ -1,4 +1,34 @@
-import { getChatGPTUser } from "../app/chatgpt-auth";
-export const OWNER_USER_ID="0df9999e-fc9c-4e55-beac-6f7eb796929c";
-export function isPortfolioOwner(userId:string){return userId===OWNER_USER_ID||(process.env.NODE_ENV==="development"&&userId==="local_seedy")}
-export async function requireEditor(){const user=await getChatGPTUser();if(!user)return{ok:false as const,status:401,message:"Inicia sesión con ChatGPT para continuar."};if(!isPortfolioOwner(user.userId))return{ok:false as const,status:403,message:"Esta cuenta no tiene acceso al editor."};return{ok:true as const,user};}
+import { env } from "cloudflare:workers";
+import { headers } from "next/headers";
+
+export type EditorUser = { email: string; displayName: string };
+
+export function isPortfolioOwner(email: string) {
+  return email.toLowerCase() === env.OWNER_EMAIL?.toLowerCase();
+}
+
+export async function getEditorUser(): Promise<EditorUser | null> {
+  if (process.env.NODE_ENV === "development") {
+    const email = env.OWNER_EMAIL || "alejandroug2608@gmail.com";
+    return { email, displayName: "Alejandro Urvieta" };
+  }
+  if (env.ACCESS_ENABLED !== "true") return null;
+  const requestHeaders = await headers();
+  const email = requestHeaders.get("cf-access-authenticated-user-email")?.trim();
+  if (!email || !isPortfolioOwner(email)) return null;
+  return { email, displayName: email };
+}
+
+function hasSameOrigin(request: Request) {
+  const origin = request.headers.get("origin");
+  if (!origin) return false;
+  try { return new URL(origin).origin === new URL(request.url).origin; }
+  catch { return false; }
+}
+
+export async function requireEditor(request?: Request) {
+  const user = await getEditorUser();
+  if (!user) return { ok: false as const, status: 401, message: "Acceso privado no autorizado." };
+  if (request && !hasSameOrigin(request)) return { ok: false as const, status: 403, message: "Solicitud rechazada por seguridad." };
+  return { ok: true as const, user };
+}
