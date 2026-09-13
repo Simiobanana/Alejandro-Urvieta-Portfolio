@@ -4,6 +4,10 @@
   "main": "vinext/server/fetch-handler",
   "compatibility_date": "2026-05-15",
   "compatibility_flags": ["nodejs_compat"],
+  "routes": [
+    { "pattern": "alejandrourvieta.com", "custom_domain": true },
+    { "pattern": "www.alejandrourvieta.com", "custom_domain": true }
+  ],
   "d1_databases": [
     {
       "binding": "DB",
