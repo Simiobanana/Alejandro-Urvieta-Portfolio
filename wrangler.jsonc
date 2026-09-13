@@ -23,7 +23,7 @@
   ],
   "vars": {
     "OWNER_EMAIL": "alejandroug2608@gmail.com",
-    "ACCESS_ENABLED": "false"
+    "ACCESS_ENABLED": "true"
   },
   "observability": { "enabled": true }
 }
