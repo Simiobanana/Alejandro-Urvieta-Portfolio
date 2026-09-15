@@ -10,7 +10,7 @@ let incoming=new Headers();
 const exports={};
 const source=fs.readFileSync("lib/editor-auth.ts","utf8")+"\nexport const verifyForTest=verifyAccessToken;";
 const compiled=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
-vm.runInNewContext(compiled,{exports,require:name=>name==="cloudflare:workers"?{env:{OWNER_EMAIL:owner,ACCESS_ENABLED:"true",ACCESS_ISSUER:issuer,ACCESS_AUDIENCE:audience}}:{headers:async()=>incoming},process:{env:{NODE_ENV:"production"}},Headers,Request,Response,TextEncoder,TextDecoder,Uint8Array,atob,URL,AbortSignal,crypto:webcrypto,fetch:async()=>Response.json({keys:[jwk]})});
+vm.runInNewContext(compiled,{exports,require:name=>name==="cloudflare:workers"?{env:{OWNER_EMAIL:owner,ACCESS_ENABLED:"true",ACCESS_ISSUER:issuer,ACCESS_AUDIENCE:audience}}:{headers:async()=>incoming},process:{env:{NODE_ENV:"production"}},Headers,Request,Response,TextEncoder,TextDecoder,Uint8Array,atob,URL,AbortSignal,crypto:webcrypto,fetch:async(_url,options)=>{assert.equal(options.redirect,"manual","Workers rejects redirect:error");return Response.json({keys:[jwk]});}});
 const encode=x=>Buffer.from(JSON.stringify(x)).toString("base64url");
 const now=Math.floor(Date.now()/1000),base={iss:issuer,aud:[audience],email:owner,exp:now+120,iat:now};
 async function token(claims,header={alg:"RS256",kid:"test"}){const payload=encode(header)+"."+encode(claims);const signature=await webcrypto.subtle.sign("RSASSA-PKCS1-v1_5",pair.privateKey,new TextEncoder().encode(payload));return payload+"."+Buffer.from(signature).toString("base64url");}

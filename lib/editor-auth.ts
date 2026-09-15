@@ -27,7 +27,8 @@ async function signingKey(issuer: string, kid: string) {
   if (!refreshPromise && now - lastRefreshAttempt >= 60_000) {
     lastRefreshAttempt = now;
     refreshPromise = (async () => {
-      const response = await fetch(`${issuer}/cdn-cgi/access/certs`, { signal: AbortSignal.timeout(5000), redirect: "error" });
+      // Workers supports manual/follow, but not redirect:error. Reject 3xx via response.ok.
+      const response = await fetch(`${issuer}/cdn-cgi/access/certs`, { signal: AbortSignal.timeout(5000), redirect: "manual" });
       if (!response.ok || Number(response.headers.get("content-length") || 0) > 100_000) throw new Error("Signing keys unavailable");
       const text = await response.text();
       if (text.length > 100_000) throw new Error("Invalid signing keys");
@@ -50,20 +51,22 @@ async function verifyAccessToken(token: string, issuer: string, audience: string
     const header = JSON.parse(new TextDecoder().decode(decodePart(parts[0]))) as Record<string, unknown>;
     if (header.alg !== "RS256" || typeof header.kid !== "string" || header.kid.length > 256 || header.crit !== undefined) return null;
     const jwk = await signingKey(issuer, header.kid);
-    if (!jwk) return null;
+    if (!jwk) throw new Error("AUTH_KEY");
     const key = await crypto.subtle.importKey("jwk", jwk, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["verify"]);
     const valid = await crypto.subtle.verify("RSASSA-PKCS1-v1_5", key, decodePart(parts[2]), encoder.encode(`${parts[0]}.${parts[1]}`));
-    if (!valid) return null;
+    if (!valid) throw new Error("AUTH_SIGNATURE");
     const claims = JSON.parse(new TextDecoder().decode(decodePart(parts[1]))) as Record<string, unknown>;
     const now = Math.floor(Date.now() / 1000);
     const audiences = Array.isArray(claims.aud) ? claims.aud : [claims.aud];
-    if (claims.iss !== issuer || !audiences.includes(audience)) return null;
+    if (claims.iss !== issuer) throw new Error("AUTH_ISSUER");
+    if (!audiences.includes(audience)) throw new Error("AUTH_AUDIENCE");
     if (typeof claims.exp !== "number" || !Number.isFinite(claims.exp) || claims.exp <= now) return null;
     if (claims.nbf !== undefined && (typeof claims.nbf !== "number" || !Number.isFinite(claims.nbf) || claims.nbf > now + 30)) return null;
     if (claims.iat !== undefined && (typeof claims.iat !== "number" || !Number.isFinite(claims.iat) || claims.iat > now + 30)) return null;
     if (typeof claims.email !== "string" || !isPortfolioOwner(claims.email)) return null;
     return claims.email.trim().toLowerCase();
-  } catch {
+  } catch(error) {
+    console.warn("Editor authentication failed",error instanceof Error ? error.message : "AUTH_UNKNOWN");
     return null;
   }
 }
@@ -75,7 +78,7 @@ export async function getEditorUser(): Promise<EditorUser | null> {
   }
   if (env.ACCESS_ENABLED !== "true" || !env.ACCESS_ISSUER || !env.ACCESS_AUDIENCE) return null;
   const token = (await headers()).get("cf-access-jwt-assertion");
-  if (!token) return null;
+  if (!token) {console.warn("Editor authentication failed", "AUTH_HEADER_MISSING");return null;}
   const email = await verifyAccessToken(token, env.ACCESS_ISSUER, env.ACCESS_AUDIENCE);
   return email ? { email, displayName: email } : null;
 }
