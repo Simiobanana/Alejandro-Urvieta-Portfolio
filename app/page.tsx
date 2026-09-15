@@ -1,5 +1,3 @@
 import Portfolio from "./portfolio";
-
-export default function Home() {
-  return <Portfolio />;
-}
+import { loadPublicContent } from "@/lib/content-repository";
+export default async function Home(){return <Portfolio initialData={await loadPublicContent()}/>;}

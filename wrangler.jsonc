@@ -4,6 +4,8 @@
   "main": "vinext/server/fetch-handler",
   "compatibility_date": "2026-05-15",
   "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "preview_urls": false,
   "routes": [
     { "pattern": "alejandrourvieta.com", "custom_domain": true },
     { "pattern": "www.alejandrourvieta.com", "custom_domain": true }
@@ -23,7 +25,9 @@
   ],
   "vars": {
     "OWNER_EMAIL": "alejandroug2608@gmail.com",
-    "ACCESS_ENABLED": "true"
+    "ACCESS_ENABLED": "true",
+    "ACCESS_ISSUER": "https://fancy-sun-51a5.cloudflareaccess.com",
+    "ACCESS_AUDIENCE": "a338b9d7a4fc6c1e49a4024a9453aefb37c727052e18b5351ce49cb10b1d464c"
   },
   "observability": { "enabled": true }
 }

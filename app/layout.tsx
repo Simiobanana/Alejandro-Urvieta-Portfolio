@@ -4,7 +4,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Alejandro Urvieta | Game Developer & Technical Artist",
   description: "Portfolio of Alejandro Urvieta: Unity tools, Unreal Engine gameplay, real-time VFX, C++ graphics and interactive web development.",
-  other: { "codex-preview": "development" },
+
   icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },
 };
 

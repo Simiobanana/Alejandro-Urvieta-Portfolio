@@ -1,0 +1,24 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import vm from "node:vm";
+import ts from "typescript";
+import { webcrypto } from "node:crypto";
+const issuer="https://example.cloudflareaccess.com",audience="test-audience",owner="owner@example.com";
+const pair=await webcrypto.subtle.generateKey({name:"RSASSA-PKCS1-v1_5",modulusLength:2048,publicExponent:new Uint8Array([1,0,1]),hash:"SHA-256"},true,["sign","verify"]);
+const jwk={...await webcrypto.subtle.exportKey("jwk",pair.publicKey),kid:"test"};
+let incoming=new Headers();
+const exports={};
+const source=fs.readFileSync("lib/editor-auth.ts","utf8")+"\nexport const verifyForTest=verifyAccessToken;";
+const compiled=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
+vm.runInNewContext(compiled,{exports,require:name=>name==="cloudflare:workers"?{env:{OWNER_EMAIL:owner,ACCESS_ENABLED:"true",ACCESS_ISSUER:issuer,ACCESS_AUDIENCE:audience}}:{headers:async()=>incoming},process:{env:{NODE_ENV:"production"}},Headers,Request,Response,TextEncoder,TextDecoder,Uint8Array,atob,URL,AbortSignal,crypto:webcrypto,fetch:async()=>Response.json({keys:[jwk]})});
+const encode=x=>Buffer.from(JSON.stringify(x)).toString("base64url");
+const now=Math.floor(Date.now()/1000),base={iss:issuer,aud:[audience],email:owner,exp:now+120,iat:now};
+async function token(claims,header={alg:"RS256",kid:"test"}){const payload=encode(header)+"."+encode(claims);const signature=await webcrypto.subtle.sign("RSASSA-PKCS1-v1_5",pair.privateKey,new TextEncoder().encode(payload));return payload+"."+Buffer.from(signature).toString("base64url");}
+assert.equal(await exports.verifyForTest(await token(base),issuer,audience),owner);
+for(const change of [{email:"attacker@example.com"},{aud:["other"]},{iss:"https://other.cloudflareaccess.com"},{exp:now-10},{nbf:now+120}])assert.equal(await exports.verifyForTest(await token({...base,...change}),issuer,audience),null);
+assert.equal(await exports.verifyForTest(await token(base,{alg:"none",kid:"test"}),issuer,audience),null);
+incoming=new Headers({"cf-access-authenticated-user-email":owner});assert.equal(await exports.getEditorUser(),null,"Email header alone is not authentication");
+incoming=new Headers({"cf-access-jwt-assertion":await token(base)});
+assert.equal((await exports.requireEditor(new Request("https://portfolio.example/api/admin/projects"))).ok,true);
+assert.equal((await exports.requireEditor(new Request("https://portfolio.example/api/admin/projects",{method:"POST",headers:{Origin:"https://attacker.example"}}))).status,403);
+console.log("PASS: JWT signature, issuer, audience, owner, expiration, not-before, unsigned rejection, spoofed header rejection, GET access, CSRF.");

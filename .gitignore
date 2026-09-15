@@ -43,3 +43,6 @@ next-env.d.ts
 /.codex/
 /outputs/
 /work/
+
+*.tsbuildinfo
+dependency-audit.json

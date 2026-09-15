@@ -1,4 +1,2 @@
-import { asc } from "drizzle-orm";
-import { getDb } from "../../../db";
-import { customSections } from "../../../db/schema";
-export async function GET(){try{return Response.json({sections:await getDb().select().from(customSections).orderBy(asc(customSections.sortOrder),asc(customSections.id))})}catch(error){return Response.json({sections:[],error:error instanceof Error?error.message:"Database unavailable"})}}
+import { readSections } from "@/lib/content-repository";
+export async function GET(){try{return Response.json({sections:await readSections()},{headers:{"Cache-Control":"no-store"}});}catch{return Response.json({error:"Contenido temporalmente no disponible."},{status:503});}}

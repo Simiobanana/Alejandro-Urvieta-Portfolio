@@ -1,8 +1,11 @@
 import { sql } from "drizzle-orm";
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
-export const projects = sqliteTable("projects", { id: integer("id").primaryKey({ autoIncrement:true }), title:text("title").notNull(), titleEs:text("title_es"), category:text("category").notNull().default("Otro"), description:text("description").notNull().default(""), descriptionEs:text("description_es"), outcome:text("outcome").notNull().default("Proyecto personal"), outcomeEs:text("outcome_es"), details:text("details").notNull().default("[]"), detailsEs:text("details_es").notNull().default("[]"), stack:text("stack").notNull().default("[]"), href:text("href").notNull().default("#"), repo:text("repo"), mediaUrl:text("media_url"), mediaType:text("media_type"), mediaAlt:text("media_alt"), featured:integer("featured",{mode:"boolean"}).notNull().default(false), published:integer("published",{mode:"boolean"}).notNull().default(true), sortOrder:integer("sort_order").notNull().default(100), createdAt:text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`), updatedAt:text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`) });
+export const projects = sqliteTable("projects", { code:text("code").notNull().default(""), accent:text("accent").notNull().default("cyan"), media:text("media").notNull().default("[]"), id: integer("id").primaryKey({ autoIncrement:true }), title:text("title").notNull(), titleEs:text("title_es"), category:text("category").notNull().default("Otro"), description:text("description").notNull().default(""), descriptionEs:text("description_es"), outcome:text("outcome").notNull().default("Proyecto personal"), outcomeEs:text("outcome_es"), details:text("details").notNull().default("[]"), detailsEs:text("details_es").notNull().default("[]"), stack:text("stack").notNull().default("[]"), href:text("href").notNull().default("#"), repo:text("repo"), mediaUrl:text("media_url"), mediaType:text("media_type"), mediaAlt:text("media_alt"), featured:integer("featured",{mode:"boolean"}).notNull().default(false), published:integer("published",{mode:"boolean"}).notNull().default(true), sortOrder:integer("sort_order").notNull().default(100), createdAt:text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`), updatedAt:text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`) });
 
 export const customSections = sqliteTable("custom_sections", {
+  kind: text("kind").notNull().default("custom"),
+  media: text("media").notNull().default("[]"),
+  items: text("items").notNull().default("[]"),
   id: integer("id").primaryKey({ autoIncrement: true }),
   eyebrowEn: text("eyebrow_en").notNull().default("FEATURED NOTE"),
   eyebrowEs: text("eyebrow_es").notNull().default("NOTA DESTACADA"),
@@ -22,6 +25,9 @@ export const customSections = sqliteTable("custom_sections", {
 });
 
 export const siteSettings = sqliteTable("site_settings", {
+  palette: text("palette").notNull().default("{}"),
+  previewSeconds: integer("preview_seconds").notNull().default(6),
+  revealStyle: text("reveal_style").notNull().default("pixels"),
   id: integer("id").primaryKey().default(1),
   accentCyan: text("accent_cyan").notNull().default("#31e9ff"),
   accentViolet: text("accent_violet").notNull().default("#9d6cff"),

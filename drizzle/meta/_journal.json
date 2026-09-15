@@ -15,6 +15,13 @@
       "when": 1789166059040,
       "tag": "0001_wooden_ares",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1789359917201,
+      "tag": "0002_romantic_karnak",
+      "breakpoints": true
     }
   ]
 }

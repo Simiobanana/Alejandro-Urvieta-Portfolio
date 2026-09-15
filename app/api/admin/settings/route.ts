@@ -1,7 +1,8 @@
 import { sql } from "drizzle-orm";
-import { getDb } from "../../../../db";
-import { siteSettings } from "../../../../db/schema";
-import { requireEditor } from "../../../../lib/editor-auth";
-
-const defaults={id:1,accentCyan:"#31e9ff",accentViolet:"#9d6cff",motionLevel:2,heroTitleEn:"I engineer playable ideas.",heroTitleEs:"Convierto ideas en experiencias jugables.",heroTextEn:"Game and software developer focused on Unity, C# and Unreal Engine 5.",heroTextEs:"Desarrollador de videojuegos y software enfocado en Unity, C# y Unreal Engine 5.",availabilityEn:"Available for new opportunities",availabilityEs:"Disponible para nuevas oportunidades"};
-export async function PUT(request:Request){const access=await requireEditor(request);if(!access.ok)return Response.json({error:access.message},{status:access.status});const body=await request.json() as Record<string,unknown>;const values={...defaults,accentCyan:String(body.accentCyan??defaults.accentCyan),accentViolet:String(body.accentViolet??defaults.accentViolet),motionLevel:Math.max(0,Math.min(2,Number(body.motionLevel??2))),heroTitleEn:String(body.heroTitleEn??defaults.heroTitleEn),heroTitleEs:String(body.heroTitleEs??defaults.heroTitleEs),heroTextEn:String(body.heroTextEn??defaults.heroTextEn),heroTextEs:String(body.heroTextEs??defaults.heroTextEs),availabilityEn:String(body.availabilityEn??defaults.availabilityEn),availabilityEs:String(body.availabilityEs??defaults.availabilityEs),updatedAt:sql`CURRENT_TIMESTAMP`};const[settings]=await getDb().insert(siteSettings).values(values).onConflictDoUpdate({target:siteSettings.id,set:values}).returning();return Response.json({settings})}
+import { getDb } from "@/db";
+import { siteSettings } from "@/db/schema";
+import { requireEditor } from "@/lib/editor-auth";
+import { readSettings } from "@/lib/content-repository";
+import { settingsInput, readInput, inputError } from "@/lib/content-validation";
+export async function GET(request:Request){const access=await requireEditor(request);if(!access.ok)return Response.json({error:access.message},{status:access.status});try{return Response.json({settings:await readSettings()},{headers:{"Cache-Control":"no-store"}});}catch(error){return inputError(error);}}
+export async function PUT(request:Request){const access=await requireEditor(request);if(!access.ok)return Response.json({error:access.message},{status:access.status});try{const body=await readInput(request,settingsInput);const values={...body,id:1,palette:JSON.stringify(body.palette),updatedAt:sql`CURRENT_TIMESTAMP`};await getDb().insert(siteSettings).values(values).onConflictDoUpdate({target:siteSettings.id,set:values});return Response.json({settings:await readSettings()});}catch(error){return inputError(error);}}

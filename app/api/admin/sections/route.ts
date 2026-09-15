@@ -1,5 +1,7 @@
-import { getDb } from "../../../../db";
-import { customSections } from "../../../../db/schema";
-import { requireEditor } from "../../../../lib/editor-auth";
-
-export async function POST(request:Request){const access=await requireEditor(request);if(!access.ok)return Response.json({error:access.message},{status:access.status});const body=await request.json() as Record<string,unknown>,titleEn=String(body.titleEn??"").trim(),titleEs=String(body.titleEs??"").trim();if(!titleEn||!titleEs)return Response.json({error:"Escribe el título en ambos idiomas."},{status:400});const[section]=await getDb().insert(customSections).values({eyebrowEn:String(body.eyebrowEn??"FEATURED NOTE"),eyebrowEs:String(body.eyebrowEs??"NOTA DESTACADA"),titleEn,titleEs,bodyEn:String(body.bodyEn??""),bodyEs:String(body.bodyEs??""),linkLabelEn:body.linkLabelEn?String(body.linkLabelEn):null,linkLabelEs:body.linkLabelEs?String(body.linkLabelEs):null,href:body.href?String(body.href):null,mediaUrl:body.mediaUrl?String(body.mediaUrl):null,mediaType:body.mediaType?String(body.mediaType):null,published:body.published!==false,sortOrder:Number(body.sortOrder??100)}).returning();return Response.json({section},{status:201})}
+import { getDb } from "@/db";
+import { customSections } from "@/db/schema";
+import { requireEditor } from "@/lib/editor-auth";
+import { sectionInput, readInput, inputError } from "@/lib/content-validation";
+import { readSections, serializeSection } from "@/lib/content-repository";
+export async function GET(request:Request){const access=await requireEditor(request);if(!access.ok)return Response.json({error:access.message},{status:access.status});try{return Response.json({sections:await readSections(true)},{headers:{"Cache-Control":"no-store"}});}catch(error){return inputError(error);}}
+export async function POST(request:Request){const access=await requireEditor(request);if(!access.ok)return Response.json({error:access.message},{status:access.status});try{const body=await readInput(request,sectionInput);const [row]=await getDb().insert(customSections).values({...body,items:JSON.stringify(body.items),media:JSON.stringify(body.media)}).returning();return Response.json({section:serializeSection(row)},{status:201});}catch(error){return inputError(error);}}
