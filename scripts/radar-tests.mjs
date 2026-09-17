@@ -15,7 +15,14 @@ button().props.onClick();assert.equal(media().props['data-preview'],false);asser
 tick(3000);assert.equal(media().props['data-preview'],true);
 tick(2700);assert.equal(media().props['data-preview'],false);
 tick(3000);assert.equal(media().props['data-preview'],true);
-assert.equal(media().props.onMouseEnter,undefined,'Touch cannot create sticky hover');
+assert.equal(media().props.onMouseEnter,undefined,'Do not use synthetic mouse hover');
+tick(2700);
+media().props.onPointerEnter({pointerType:'touch'});assert.equal(media().props['data-preview'],false,'Touch must not reveal indefinitely');
+media().props.onPointerEnter({pointerType:'mouse'});assert.equal(media().props['data-preview'],true,'Mouse hover reveals preview');
+button().props.onClick();assert.equal(media().props['data-preview'],false,'Hide button wins over hover');
+media().props.onPointerLeave();media().props.onPointerEnter({pointerType:'mouse'});assert.equal(media().props['data-preview'],true,'New mouse entry reveals again');
+media().props.onPointerDown({pointerType:'touch'});assert.equal(media().props['data-preview'],false,'Touch clears hover on hybrid devices');
+media().props.onPointerEnter({pointerType:'mouse'});media().props.onPointerLeave();assert.equal(media().props['data-preview'],false,'Leaving restores timed/manual state');
 observer([{isIntersecting:false}]);assert.equal(tasks.size,0);
 observer([{isIntersecting:true}]);context.document.hidden=true;visibility();assert.equal(tasks.size,0);
 context.document.hidden=false;visibility();assert.equal(tasks.size,1);

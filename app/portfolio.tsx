@@ -23,6 +23,7 @@ function Gallery({items,title}:{items:MediaItem[];title:string}) {
 function ProjectCard({project:p,index,lang,effects,seconds,cooldown,onOpen}:{project:StoredProject;index:number;lang:Lang;effects:boolean;seconds:number;cooldown:number;onOpen:()=>void}) {
  const ref=useRef<HTMLDivElement>(null);
  const [visible,setVisible]=useState(false),[preview,setPreview]=useState(false),[manual,setManual]=useState<boolean|null>(null);
+ const [hover,setHover]=useState(false),[hoverDismissed,setHoverDismissed]=useState(false);
  const control=useRef<(shown:boolean)=>void>(()=>{});
  const media=mediaList(p)[0],poster=media?.type.startsWith("video")?media.poster:media?.url,t=labels[lang];
  useEffect(()=>{
@@ -44,12 +45,12 @@ function ProjectCard({project:p,index,lang,effects,seconds,cooldown,onOpen}:{pro
   observer.observe(node);document.addEventListener("visibilitychange",sync);
   return()=>{clear();observer.disconnect();document.removeEventListener("visibilitychange",sync);control.current=()=>{};};
  },[effects,seconds,cooldown]);
- const shown=manual??(!effects||seconds===0||preview);
- return <article className={"project-card glass accent-"+p.accent+(p.featured?" featured":"")}><div className="project-media radar" ref={ref} data-preview={shown} data-active={visible&&effects}>
+ const shown=hover&&!hoverDismissed ? true : (manual??(!effects||seconds===0||preview));
+ return <article className={"project-card glass accent-"+p.accent+(p.featured?" featured":"")}><div className="project-media radar" ref={ref} data-preview={shown} data-active={visible&&effects} onPointerEnter={event=>{if(event.pointerType==="mouse"){setHover(true);setHoverDismissed(false);}}} onPointerLeave={()=>{setHover(false);setHoverDismissed(false);}} onPointerDown={event=>{if(event.pointerType!=="mouse"){setHover(false);setHoverDismissed(false);}}}>
  <span className="visual-grid" aria-hidden="true"/><span className="visual-ring" aria-hidden="true"/><span className="radar-sweep" aria-hidden="true"/>
  <div className="radar-preview">{poster?<img src={poster} alt={media.alt||text(p.title,p.titleEs,lang)} loading="lazy" decoding="async"/>:<div className="radar-text-preview"><Gamepad2 size={34}/><strong>{text(p.title,p.titleEs,lang)}</strong><span>{p.stack.slice(0,3).join(" · ")}</span></div>}</div>
  <span className="project-number" aria-hidden="true">{String(index+1).padStart(2,"0")}</span><span className="project-kind">{p.category}</span>
- <button type="button" className="radar-toggle" onClick={()=>control.current(!shown)} aria-pressed={shown} aria-label={shown?t.hide:t.preview} title={shown?t.hide:t.preview}>{shown?<EyeOff size={19} aria-hidden="true"/>:<Eye size={19} aria-hidden="true"/>}</button>
+ <button type="button" className="radar-toggle" onClick={()=>{setHoverDismissed(hover&&shown);control.current(!shown);}} aria-pressed={shown} aria-label={shown?t.hide:t.preview} title={shown?t.hide:t.preview}>{shown?<EyeOff size={19} aria-hidden="true"/>:<Eye size={19} aria-hidden="true"/>}</button>
  </div><div className="project-body"><p className="outcome">{text(p.outcome,p.outcomeEs,lang)}</p><h3>{text(p.title,p.titleEs,lang)}</h3><p>{text(p.description,p.descriptionEs,lang)}</p><div className="tags">{p.stack.map((x,i)=><span key={i}>{x}</span>)}</div><button className="case-link" onClick={onOpen}>{t.view}<ArrowUpRight size={16}/></button></div></article>;
 }
 function CaseModal({project:p,lang,onClose}:{project:StoredProject;lang:Lang;onClose:()=>void}) {
