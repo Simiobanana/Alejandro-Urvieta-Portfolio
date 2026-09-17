@@ -3,12 +3,20 @@
   "name": "alejandro-urvieta-portfolio",
   "main": "vinext/server/fetch-handler",
   "compatibility_date": "2026-05-15",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
   "workers_dev": false,
   "preview_urls": false,
   "routes": [
-    { "pattern": "alejandrourvieta.com", "custom_domain": true },
-    { "pattern": "www.alejandrourvieta.com", "custom_domain": true }
+    {
+      "pattern": "alejandrourvieta.com",
+      "custom_domain": true
+    },
+    {
+      "pattern": "www.alejandrourvieta.com",
+      "custom_domain": true
+    }
   ],
   "d1_databases": [
     {
@@ -29,5 +37,31 @@
     "ACCESS_ISSUER": "https://fancy-sun-51a5.cloudflareaccess.com",
     "ACCESS_AUDIENCE": "a338b9d7a4fc6c1e49a4024a9453aefb37c727052e18b5351ce49cb10b1d464c"
   },
-  "observability": { "enabled": true }
+  "observability": {
+    "enabled": true
+  },
+  "send_email": [
+    {
+      "name": "CONTACT_EMAIL",
+      "destination_address": "alejandroug2608@gmail.com"
+    }
+  ],
+  "ratelimits": [
+    {
+      "name": "CONTACT_LIMIT",
+      "namespace_id": "26081701",
+      "simple": {
+        "limit": 5,
+        "period": 60
+      }
+    },
+    {
+      "name": "CONTACT_TOTAL_LIMIT",
+      "namespace_id": "26081702",
+      "simple": {
+        "limit": 20,
+        "period": 60
+      }
+    }
+  ]
 }

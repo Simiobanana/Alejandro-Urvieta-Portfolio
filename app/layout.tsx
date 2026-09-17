@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: "Alejandro Urvieta | Game Developer & Technical Artist",
   description: "Portfolio of Alejandro Urvieta: Unity tools, Unreal Engine gameplay, real-time VFX, C++ graphics and interactive web development.",
 
-  icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },
+  icons: { icon: "/favicon.svg?v=code-1", shortcut: "/favicon.svg?v=code-1" },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

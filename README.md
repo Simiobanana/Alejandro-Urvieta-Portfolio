@@ -112,3 +112,13 @@ pnpm install
 ```
 
 El sitio ya no depende del dominio ni del inicio de sesión de ChatGPT Sites.
+
+## Contact form and favicon
+
+The public contact form posts to `/api/contact`; it never opens a mail application. Cloudflare Email Routing is enabled for `alejandrourvieta.com`, with `alejandroug2608@gmail.com` as the verified destination. The `CONTACT_EMAIL` binding restricts delivery to that address. Messages use `contact@alejandrourvieta.com` as the sender and the visitor's validated email as Reply-To. There is no Gmail password or browser-side API key.
+
+The handler enforces same-origin JSON requests, a 24 KB body limit, field limits, a honeypot, and Cloudflare rate limits (5 attempts per minute per hashed IP and 20 deliveries per minute per Cloudflare location). These are abuse controls, not guaranteed global quotas or a replacement for CAPTCHA if spam becomes a problem. Messages are not stored in D1 or application logs; they are delivered to the owner's Gmail. Local emulation does not deliver real mail and shows an error rather than claiming success.
+
+Validation: `node scripts/contact-tests.mjs`. The tests cover MIME encoding, header injection, input limits, rejected origins, spam controls, and delivery failure. A production end-to-end test must also check the destination inbox.
+
+The custom colorful code favicon lives in `public/favicon.svg`; increment the version query in `app/layout.tsx` after replacing it to refresh browser caches.
