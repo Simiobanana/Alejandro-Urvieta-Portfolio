@@ -29,6 +29,7 @@ Los ocho proyectos y las seis secciones originales forman parte de la biblioteca
 - Apariencia tiene paletas independientes para día y noche, muestra de colores y relación de contraste. Los cambios de la vista previa no se publican hasta guardar.
 - El movimiento ambiental tiene tres niveles. El visitante elige Auto, Sí u Off/No. Auto reduce los efectos en equipos con pocos núcleos/memoria o ahorro de datos; no detecta directamente si Brave tiene aceleración por hardware. Se respeta siempre la preferencia de movimiento reducido del sistema.
 - La duración de las previsualizaciones es de 0 a 60 segundos. Cero conserva las portadas visibles; sin efectos también permanecen visibles. Se pueden revelar otra vez con el botón de cada tarjeta.
+- **Pausa entre escaneos** controla el tiempo oculto entre ciclos (1–300 segundos, 15 por defecto). El ojo alterna la visibilidad real y reinicia el intervalo. Tocar la imagen no la fija; los ciclos se pausan fuera de pantalla o al cambiar de pestaña. Con efectos apagados o duración cero no hay ciclos automáticos, pero el ojo sigue funcionando.
 - Se aceptan JPG, PNG, WebP, GIF, MP4 y WebM. SVG no se admite en las cargas del editor. La portada SVG de Ká Hai es un recurso estático revisado y representa un resumen, no una captura del sitio.
 
 ### Seguridad y límites
@@ -56,6 +57,7 @@ pnpm exec wrangler d1 execute alejandro-urvieta-portfolio --local --file drizzle
 pnpm exec wrangler d1 execute alejandro-urvieta-portfolio --local --file drizzle/0002_romantic_karnak.sql
 pnpm exec wrangler d1 execute alejandro-urvieta-portfolio --local --file drizzle/0003_editable_content.sql
 pnpm exec wrangler d1 execute alejandro-urvieta-portfolio --local --file drizzle/0004_project_media.sql
+pnpm exec wrangler d1 execute alejandro-urvieta-portfolio --local --file drizzle/0005_radar_cooldown.sql
 pnpm run dev
 ```
 

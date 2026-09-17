@@ -13,14 +13,14 @@ export const defaultPalette: {dark:Palette;light:Palette} = {
 export type Settings = {
   accentCyan:string;accentViolet:string;motionLevel:number;heroTitleEn:string;heroTitleEs:string;
   heroTextEn:string;heroTextEs:string;availabilityEn:string;availabilityEs:string;
-  palette: { dark:Palette;light:Palette }; previewSeconds:number; revealStyle:"pixels"|"fade"|"rise"|"none";
+  palette: { dark:Palette;light:Palette }; previewSeconds:number; radarCooldownSeconds:number; revealStyle:"pixels"|"fade"|"rise"|"none";
 };
 export const defaultSettings:Settings={
   accentCyan:"#31e9ff",accentViolet:"#9d6cff",motionLevel:2,
   heroTitleEn:"I engineer playable ideas.",heroTitleEs:"Convierto ideas en experiencias jugables.",
   heroTextEn:"Game and software developer focused on Unity, C# and Unreal Engine 5.",heroTextEs:"Desarrollador de videojuegos y software enfocado en Unity, C# y Unreal Engine 5.",
   availabilityEn:"Available for new opportunities",availabilityEs:"Disponible para nuevas oportunidades",
-  palette:defaultPalette,previewSeconds:6,revealStyle:"pixels"
+  palette:defaultPalette,previewSeconds:6,radarCooldownSeconds:15,revealStyle:"pixels"
 };
 const cssNames:Partial<Record<keyof Palette,string>>={bg2:"bg-2",surfaceStrong:"surface-strong",lineStrong:"line-strong",buttonBg:"button-bg",buttonText:"button-text"};
 export function paletteStyle(palette:Palette):CSSProperties {

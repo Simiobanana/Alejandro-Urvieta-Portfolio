@@ -1,0 +1,1 @@
+ALTER TABLE `site_settings` ADD `radar_cooldown_seconds` integer DEFAULT 15 NOT NULL;

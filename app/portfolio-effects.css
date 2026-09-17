@@ -20,3 +20,5 @@
 @media(max-width:420px){.portfolio .nav-wrap{width:calc(100% - 20px);padding:8px;top:10px}.portfolio .brand>span:last-child{display:none}.portfolio .hero h1{font-size:58px}.portfolio .hero,.portfolio .section-shell,.portfolio .proof-strip{width:calc(100% - 28px)}.portfolio .control{padding:0 8px}.portfolio .project-body{padding:24px}.portfolio .hero-console{padding:12px}.portfolio .core{width:110px;height:110px}.portfolio .proof-strip div{padding:20px 12px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.portfolio *, .portfolio *:before,.portfolio *:after{animation:none!important;transition:none!important}.section-reveal{opacity:1!important;transform:none!important}}
 .portfolio .effects-control{min-width:110px}.portfolio .effects-control svg{flex-shrink:0}.portfolio .effects-control select{flex-shrink:0}.highlights-shell .proof-strip{width:100%;margin:0}.highlights-shell .section-head h2{font-size:40px}
+
+.radar-toggle{min-width:44px;min-height:44px;justify-content:center;touch-action:manipulation}.radar-toggle:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}

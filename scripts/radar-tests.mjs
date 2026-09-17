@@ -1,0 +1,25 @@
+import fs from 'node:fs';import vm from 'node:vm';import ts from 'typescript';import assert from 'node:assert/strict';
+const source=fs.readFileSync('app/portfolio.tsx','utf8');const component=source.slice(source.indexOf('function ProjectCard('),source.indexOf('function CaseModal('));
+let slots=[],cursor=0,effect,cleanup,observer,visibility;let tasks=new Map(),id=0;
+const jsx=(type,props)=>({type,props});
+const context={exports:{},require:()=>({jsx,jsxs:jsx}),useRef:value=>{const i=cursor++;return slots[i]??(slots[i]={current:value===null?{}:value});},useState:value=>{const i=cursor++;if(!(i in slots))slots[i]=value;return [slots[i],v=>{slots[i]=v;}];},useEffect:fn=>{effect=fn;},IntersectionObserver:class{constructor(fn){observer=fn;}observe(){}disconnect(){}},document:{hidden:false,addEventListener:(_e,fn)=>visibility=fn,removeEventListener(){}},setTimeout:(fn,ms)=>{tasks.set(++id,{fn,ms});return id;},clearTimeout:i=>tasks.delete(i),mediaList:()=>[],labels:{en:{preview:'show',hide:'hide',view:'case'}},text:x=>x,Gamepad2:'gamepad',ArrowUpRight:'arrow',Eye:'eye',EyeOff:'eyeoff'};
+vm.runInNewContext(ts.transpileModule(component+'\nexports.Card=ProjectCard;',{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS}}).outputText,context);
+const p={accent:'cyan',stack:[],title:'test',category:'Programming'};
+let props={project:p,index:0,lang:'en',effects:true,seconds:2,cooldown:3,onOpen(){}};
+const render=()=>{cursor=0;return context.exports.Card(props);};
+const media=()=>render().props.children[0];const button=()=>media().props.children.at(-1);
+const tick=ms=>{const [key,t]=tasks.entries().next().value;assert.equal(t.ms,ms);tasks.delete(key);t.fn();};
+render();cleanup=effect();observer([{isIntersecting:true}]);
+assert.equal(media().props['data-preview'],true);assert.equal(button().props['aria-label'],'hide');
+button().props.onClick();assert.equal(media().props['data-preview'],false);assert.equal(button().props['aria-label'],'show');
+tick(3000);assert.equal(media().props['data-preview'],true);
+tick(2700);assert.equal(media().props['data-preview'],false);
+tick(3000);assert.equal(media().props['data-preview'],true);
+assert.equal(media().props.onMouseEnter,undefined,'Touch cannot create sticky hover');
+observer([{isIntersecting:false}]);assert.equal(tasks.size,0);
+observer([{isIntersecting:true}]);context.document.hidden=true;visibility();assert.equal(tasks.size,0);
+context.document.hidden=false;visibility();assert.equal(tasks.size,1);
+cleanup();assert.equal(tasks.size,0);
+props={...props,effects:false};render();cleanup=effect();observer([{isIntersecting:true}]);assert.equal(tasks.size,0);button().props.onClick();assert.equal(media().props['data-preview'],false);button().props.onClick();assert.equal(media().props['data-preview'],true);cleanup();
+console.log('PASS: actual visibility toggle, repeated scan, cooldown, no sticky hover, offscreen/background cancellation, effects-off manual control.');
+

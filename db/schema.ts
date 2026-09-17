@@ -26,6 +26,7 @@ export const customSections = sqliteTable("custom_sections", {
 
 export const siteSettings = sqliteTable("site_settings", {
   palette: text("palette").notNull().default("{}"),
+  radarCooldownSeconds: integer("radar_cooldown_seconds").notNull().default(15),
   previewSeconds: integer("preview_seconds").notNull().default(6),
   revealStyle: text("reveal_style").notNull().default("pixels"),
   id: integer("id").primaryKey().default(1),

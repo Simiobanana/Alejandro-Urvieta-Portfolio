@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ArrowUpRight, Braces, Code2, ExternalLink, Gamepad2, GitFork, Languages, Mail, Moon, Palette, Sparkles, Sun, X, Zap, Eye } from "lucide-react";
+import { ArrowUpRight, Braces, Code2, ExternalLink, Gamepad2, GitFork, Languages, Mail, Moon, Palette, Sparkles, Sun, X, Zap, Eye, EyeOff } from "lucide-react";
 import type { StoredProject, StoredSection, MediaItem } from "@/lib/content-types";
 import { paletteStyle, type Settings } from "@/lib/site-settings";
 import "./portfolio-effects.css";
@@ -20,16 +20,36 @@ function Gallery({items,title}:{items:MediaItem[];title:string}) {
  const [active,setActive]=useState(0);const item=items[active]||items[0];if(!item)return null;
  return <div className="media-gallery"><div className="gallery-stage">{item.type.startsWith("video")?<video key={item.url} src={item.url} controls playsInline preload="metadata" poster={item.poster} aria-label={item.alt||title}/>:<img src={item.url} alt={item.alt||title} loading="lazy" decoding="async"/>}</div>{items.length>1&&<div className="gallery-tabs" role="group" aria-label="Galería / Gallery">{items.map((m,i)=><button key={m.id} type="button" aria-pressed={i===active} onClick={()=>setActive(i)}>{i+1} · {m.type.startsWith("video")?"Video":"Image"}</button>)}</div>}</div>;
 }
-function ProjectCard({project:p,index,lang,effects,seconds,onOpen}:{project:StoredProject;index:number;lang:Lang;effects:boolean;seconds:number;onOpen:()=>void}) {
- const ref=useRef<HTMLDivElement>(null); const [visible,setVisible]=useState(false),[preview,setPreview]=useState(false),[hover,setHover]=useState(false),[pinned,setPinned]=useState(false);
+function ProjectCard({project:p,index,lang,effects,seconds,cooldown,onOpen}:{project:StoredProject;index:number;lang:Lang;effects:boolean;seconds:number;cooldown:number;onOpen:()=>void}) {
+ const ref=useRef<HTMLDivElement>(null);
+ const [visible,setVisible]=useState(false),[preview,setPreview]=useState(false),[manual,setManual]=useState<boolean|null>(null);
+ const control=useRef<(shown:boolean)=>void>(()=>{});
  const media=mediaList(p)[0],poster=media?.type.startsWith("video")?media.poster:media?.url,t=labels[lang];
- useEffect(()=>{const node=ref.current;if(!node)return;let timer:ReturnType<typeof setTimeout>;const obs=new IntersectionObserver(([entry])=>{setVisible(entry.isIntersecting);clearTimeout(timer);if(entry.isIntersecting){setPreview(true);if(effects&&seconds>0)timer=setTimeout(()=>setPreview(false),seconds*1000+700);}},{threshold:.15});obs.observe(node);return()=>{obs.disconnect();clearTimeout(timer);};},[effects,seconds]);
- const shown=!effects||seconds===0||preview||hover||pinned;
- return <article className={"project-card glass accent-"+p.accent+(p.featured?" featured":"")}><div className="project-media radar" ref={ref} data-preview={shown} data-active={visible&&effects} onMouseEnter={()=>setHover(true)} onMouseLeave={()=>setHover(false)}>
+ useEffect(()=>{
+  const node=ref.current;if(!node)return;
+  let timer:ReturnType<typeof setTimeout>|undefined,intersecting=false;
+  const clear=()=>{if(timer!==undefined)clearTimeout(timer);};
+  const phase=(show:boolean)=>{
+   clear();setPreview(show);setManual(null);
+   if(intersecting&&!document.hidden&&effects&&seconds>0)
+    timer=setTimeout(()=>phase(!show),(show?seconds*1000+700:cooldown*1000));
+  };
+  control.current=(show:boolean)=>{
+   clear();setPreview(show);setManual(show);
+   if(intersecting&&!document.hidden&&effects&&seconds>0)
+    timer=setTimeout(()=>phase(!show),(show?seconds*1000+700:cooldown*1000));
+  };
+  const sync=()=>{const active=intersecting&&!document.hidden;setVisible(active);if(active)phase(true);else clear();};
+  const observer=new IntersectionObserver(([entry])=>{intersecting=entry.isIntersecting;sync();},{threshold:.15});
+  observer.observe(node);document.addEventListener("visibilitychange",sync);
+  return()=>{clear();observer.disconnect();document.removeEventListener("visibilitychange",sync);control.current=()=>{};};
+ },[effects,seconds,cooldown]);
+ const shown=manual??(!effects||seconds===0||preview);
+ return <article className={"project-card glass accent-"+p.accent+(p.featured?" featured":"")}><div className="project-media radar" ref={ref} data-preview={shown} data-active={visible&&effects}>
  <span className="visual-grid" aria-hidden="true"/><span className="visual-ring" aria-hidden="true"/><span className="radar-sweep" aria-hidden="true"/>
  <div className="radar-preview">{poster?<img src={poster} alt={media.alt||text(p.title,p.titleEs,lang)} loading="lazy" decoding="async"/>:<div className="radar-text-preview"><Gamepad2 size={34}/><strong>{text(p.title,p.titleEs,lang)}</strong><span>{p.stack.slice(0,3).join(" · ")}</span></div>}</div>
  <span className="project-number" aria-hidden="true">{String(index+1).padStart(2,"0")}</span><span className="project-kind">{p.category}</span>
- <button className="radar-toggle" onClick={()=>setPinned(!pinned)} aria-pressed={pinned} aria-label={pinned?t.hide:t.preview}><Eye size={14}/>{pinned?t.hide:t.preview}</button>
+ <button type="button" className="radar-toggle" onClick={()=>control.current(!shown)} aria-pressed={shown} aria-label={shown?t.hide:t.preview} title={shown?t.hide:t.preview}>{shown?<EyeOff size={19} aria-hidden="true"/>:<Eye size={19} aria-hidden="true"/>}</button>
  </div><div className="project-body"><p className="outcome">{text(p.outcome,p.outcomeEs,lang)}</p><h3>{text(p.title,p.titleEs,lang)}</h3><p>{text(p.description,p.descriptionEs,lang)}</p><div className="tags">{p.stack.map((x,i)=><span key={i}>{x}</span>)}</div><button className="case-link" onClick={onOpen}>{t.view}<ArrowUpRight size={16}/></button></div></article>;
 }
 function CaseModal({project:p,lang,onClose}:{project:StoredProject;lang:Lang;onClose:()=>void}) {
@@ -59,7 +79,7 @@ export default function Portfolio({initialData}:{initialData:Content}) {
  const title=sectionText(s,"title"),body=sectionText(s,"body"),eyebrow=sectionText(s,"eyebrow"),common={id:sectionId(s),enabled:effects,style:settings.revealStyle};
  if(s.kind==="hero")return <Reveal key={s.id} {...common} className="hero"><div className="hero-copy"><div className="status"><i/>{text(settings.availabilityEn,settings.availabilityEs,lang)}</div><p className="kicker">{eyebrow}</p><h1>{title}</h1><p className="hero-lede">{body}</p><div className="hero-actions">{link(s)}{s.items.filter(i=>i.label==="action").map((i,n)=><a className="button ghost" key={n} href={i.href}>{itemText(i,"title")}<Mail size={16}/></a>)}</div><div className="hero-facts">{s.items.filter(i=>i.label!=="action").map((i,n)=><span key={n}>{itemText(i,"title")}</span>)}</div><Gallery items={mediaList(s)} title={title}/></div><div className="hero-console glass"><div className="console-top"><span>CREATIVE_SYSTEMS.EXE</span><span className="live-dot">LIVE</span></div><div className="console-stage"><div className="core"><Gamepad2 size={30}/><strong>PLAY</strong><small>code × craft</small></div><span className="node n1"><Code2/>GAMEPLAY</span><span className="node n2"><Braces/>TOOLS</span><span className="node n3"><Palette/>VFX</span><span className="node n4"><Sparkles/>WORLDS</span></div><div className="console-foot"><span>UNITY · UE5 · C++ · WEB</span><strong>READY_01</strong></div></div></Reveal>;
  if(s.kind==="highlights")return <Reveal key={s.id} {...common} className="highlights-shell section-shell">{header(s)}<div className="proof-strip">{s.items.map((i,n)=><div key={n}><strong>{itemText(i,"title")}</strong><span>{itemText(i,"body")}</span>{i.href&&<a href={i.href}>{t.live}</a>}</div>)}</div><Gallery items={mediaList(s)} title={title}/>{link(s)}</Reveal>;
- if(s.kind==="work")return <Reveal key={s.id} {...common} className="work section-shell">{header(s)}<Gallery items={mediaList(s)} title={title}/>{link(s)}<div className="filters" role="group" aria-label={lang==="es"?"Filtrar proyectos":"Filter projects"}>{["all","programming","art","hybrid"].map(k=><button key={k} className={filter===k?"active":""} aria-pressed={filter===k} onClick={()=>setFilter(k)}>{t[k as "all"]}</button>)}</div><div className="project-grid">{visible.map((p,i)=><ProjectCard key={p.id} project={p} index={i} lang={lang} effects={effects} seconds={settings.previewSeconds} onOpen={()=>setSelected(p)}/>)}</div></Reveal>;
+ if(s.kind==="work")return <Reveal key={s.id} {...common} className="work section-shell">{header(s)}<Gallery items={mediaList(s)} title={title}/>{link(s)}<div className="filters" role="group" aria-label={lang==="es"?"Filtrar proyectos":"Filter projects"}>{["all","programming","art","hybrid"].map(k=><button key={k} className={filter===k?"active":""} aria-pressed={filter===k} onClick={()=>setFilter(k)}>{t[k as "all"]}</button>)}</div><div className="project-grid">{visible.map((p,i)=><ProjectCard key={p.id} project={p} index={i} lang={lang} effects={effects} seconds={settings.previewSeconds} cooldown={settings.radarCooldownSeconds} onOpen={()=>setSelected(p)}/>)}</div></Reveal>;
  if(s.kind==="profile")return <Reveal key={s.id} {...common} className="about section-shell">{header(s)}<div className="principles">{s.items.filter(i=>i.label!=="skill").map((i,n)=><article key={n}><span>{String(n+1).padStart(2,"0")}</span><h3>{itemText(i,"title")}</h3><p>{itemText(i,"body")}</p>{i.href&&<a href={i.href}>{t.live}</a>}</article>)}</div><div className="skill-rail">{s.items.filter(i=>i.label==="skill").map((i,n)=><span key={n}>{itemText(i,"title")}</span>)}</div><Gallery items={mediaList(s)} title={title}/>{link(s)}</Reveal>;
  if(s.kind==="experience")return <Reveal key={s.id} {...common} className="experience section-shell">{header(s)}<div className="timeline">{s.items.map((i,n)=>{const [role,...detail]=itemText(i,"body").split("\n");return <article key={n}><span className="timeline-no">{String(n+1).padStart(2,"0")}</span><span className="timeline-date">{lang==="es"?i.label.replace("NOW","AHORA"):i.label}</span><div><strong>{itemText(i,"title")}</strong><h3>{role}</h3></div><p>{detail.join("\n")}{i.href&&<a href={i.href}>{t.live}</a>}</p></article>;})}</div><Gallery items={mediaList(s)} title={title}/>{link(s)}</Reveal>;
  if(s.kind==="contact")return <Reveal key={s.id} {...common} className="contact section-shell glass"><p className="kicker">{eyebrow}</p><h2>{title}</h2><p>{body}</p><div className="hero-actions">{link(s)}{s.items.map((i,n)=><a key={n} className="button ghost" href={i.href} target="_blank" rel="noreferrer">{itemText(i,"title")}{itemText(i,"body")&&<small>{itemText(i,"body")}</small>}<ExternalLink size={15}/></a>)}</div><Gallery items={mediaList(s)} title={title}/></Reveal>;

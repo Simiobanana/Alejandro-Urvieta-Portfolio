@@ -29,7 +29,7 @@ const palette = z.object(Object.fromEntries(Object.keys(colorLabels).map(k => [k
 export const settingsInput = z.object({
   accentCyan:hex.default(defaultSettings.accentCyan),accentViolet:hex.default(defaultSettings.accentViolet),motionLevel:z.number().int().min(0).max(2),
   heroTitleEn:short.default(defaultSettings.heroTitleEn),heroTitleEs:short.default(defaultSettings.heroTitleEs),heroTextEn:long.default(defaultSettings.heroTextEn),heroTextEs:long.default(defaultSettings.heroTextEs),
-  availabilityEn:short,availabilityEs:short,palette:z.object({dark:palette,light:palette}).default(defaultPalette),previewSeconds:z.number().int().min(0).max(60),revealStyle:z.enum(["pixels","fade","rise","none"]),
+  availabilityEn:short,availabilityEs:short,palette:z.object({dark:palette,light:palette}).default(defaultPalette),radarCooldownSeconds:z.number().int().min(1).max(300).default(15),previewSeconds:z.number().int().min(0).max(60),revealStyle:z.enum(["pixels","fade","rise","none"]),
 });
 export async function readInput<T extends z.ZodTypeAny>(request:Request,schema:T):Promise<z.output<T>> {
   if (Number(request.headers.get("content-length")||0)>512000) throw new Error("INPUT_TOO_LARGE");

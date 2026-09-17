@@ -22,6 +22,13 @@
       "when": 1789359917201,
       "tag": "0002_romantic_karnak",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1789608956751,
+      "tag": "0005_radar_cooldown",
+      "breakpoints": true
     }
   ]
 }
