@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { colorLabels, defaultPalette, defaultSettings } from "./site-settings";
+import { projectCategories } from "./content-types";
 
 const short = z.string().trim().max(500);
 const long = z.string().max(20000);
@@ -12,11 +13,13 @@ export const safeLink = z.string().max(2048).refine(value => {
 const mediaUrl = safeLink.refine(v => !v || v.startsWith("https://") || (v.startsWith("/") && !v.startsWith("//")), "Archivo: usa https:// o una ruta local.");
 const media = z.array(z.object({id:short.min(1),url:mediaUrl,type:short,alt:short.default(""),poster:mediaUrl.optional()})).max(50).default([]);
 const order = z.number().int().min(-100000).max(100000).default(100);
+const hex = z.string().regex(/^#[\da-fA-F]{6}$/);
 export const projectInput = z.object({
-  title:short.min(1),titleEs:short.default(""),category:short.default("Programming"),description:long.min(1),descriptionEs:long.default(""),
+  title:short.min(1),titleEs:short.default(""),category:z.enum(projectCategories).default("Pure Programming"),description:long.min(1),descriptionEs:long.default(""),
   outcome:long.default(""),outcomeEs:long.default(""),details:z.array(long).max(50).default([]),detailsEs:z.array(long).max(50).default([]),stack:z.array(short).max(50).default([]),
   href:safeLink.default(""),repo:safeLink.default(""),mediaUrl:mediaUrl.default(""),mediaType:short.default(""),mediaAlt:short.default(""),media,
   featured:z.boolean().default(false),published:z.boolean().default(true),sortOrder:order,code:short.default(""),accent:z.enum(["cyan","violet","amber","lime","rose"]).default("cyan"),
+  hotspotX:z.number().int().min(5).max(95).nullable().default(null),hotspotY:z.number().int().min(5).max(95).nullable().default(null),accentColor:z.union([hex,z.literal("")]).default(""),previewUrl:mediaUrl.default(""),
 });
 export const sectionInput = z.object({
   kind:z.enum(["hero","highlights","work","profile","experience","contact","custom"]).default("custom"),
@@ -24,12 +27,12 @@ export const sectionInput = z.object({
   linkLabelEn:short.default(""),linkLabelEs:short.default(""),href:safeLink.default(""),mediaUrl:mediaUrl.default(""),mediaType:short.default(""),media,
   items:z.array(z.object({titleEn:short,titleEs:short,bodyEn:long,bodyEs:long,label:short,href:safeLink})).max(100).default([]),published:z.boolean().default(true),sortOrder:order,
 });
-const hex = z.string().regex(/^#[\da-fA-F]{6}$/);
 const palette = z.object(Object.fromEntries(Object.keys(colorLabels).map(k => [k,hex])) as Record<keyof typeof colorLabels,typeof hex>);
 export const settingsInput = z.object({
   accentCyan:hex.default(defaultSettings.accentCyan),accentViolet:hex.default(defaultSettings.accentViolet),motionLevel:z.number().int().min(0).max(2),
   heroTitleEn:short.default(defaultSettings.heroTitleEn),heroTitleEs:short.default(defaultSettings.heroTitleEs),heroTextEn:long.default(defaultSettings.heroTextEn),heroTextEs:long.default(defaultSettings.heroTextEs),
   availabilityEn:short,availabilityEs:short,palette:z.object({dark:palette,light:palette}).default(defaultPalette),radarCooldownSeconds:z.number().int().min(1).max(300).default(15),previewSeconds:z.number().int().min(0).max(60),revealStyle:z.enum(["pixels","fade","rise","none"]),
+  categoryColors:z.object({pureProgramming:hex,webProgramming:hex,engineArt:hex,pureArt:hex}).default(defaultSettings.categoryColors),defaultPresentation:z.enum(["immersive","standard"]).default("immersive"),
 });
 export async function readInput<T extends z.ZodTypeAny>(request:Request,schema:T):Promise<z.output<T>> {
   if (Number(request.headers.get("content-length")||0)>512000) throw new Error("INPUT_TOO_LARGE");

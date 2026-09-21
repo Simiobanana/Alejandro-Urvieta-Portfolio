@@ -29,6 +29,13 @@
       "when": 1789608956751,
       "tag": "0005_radar_cooldown",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1790020800000,
+      "tag": "0006_yggdrasil_presentation",
+      "breakpoints": true
     }
   ]
 }

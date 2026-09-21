@@ -1,4 +1,6 @@
 export type MediaItem = { id: string; url: string; type: string; alt: string; poster?: string };
+export const projectCategories = ["Pure Programming", "Web Programming", "Engine + Art", "Pure Art"] as const;
+export type ProjectCategory = typeof projectCategories[number];
 export type SectionKind = "hero" | "highlights" | "work" | "profile" | "experience" | "contact" | "custom";
 export type SectionItem = { titleEn: string; titleEs: string; bodyEn: string; bodyEs: string; label: string; href: string };
 export type StoredProject = {
@@ -6,6 +8,7 @@ export type StoredProject = {
   outcome: string; outcomeEs: string; details: string[]; detailsEs: string[]; stack: string[];
   href: string; repo: string; mediaUrl: string; mediaType: string; mediaAlt: string; media: MediaItem[];
   featured: boolean; published: boolean; sortOrder: number; code: string; accent: string;
+  hotspotX: number | null; hotspotY: number | null; accentColor: string; previewUrl: string;
 };
 export type StoredSection = {
   id: number; kind: SectionKind; eyebrowEn: string; eyebrowEs: string; titleEn: string; titleEs: string;

@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
-export const projects = sqliteTable("projects", { code:text("code").notNull().default(""), accent:text("accent").notNull().default("cyan"), media:text("media").notNull().default("[]"), id: integer("id").primaryKey({ autoIncrement:true }), title:text("title").notNull(), titleEs:text("title_es"), category:text("category").notNull().default("Otro"), description:text("description").notNull().default(""), descriptionEs:text("description_es"), outcome:text("outcome").notNull().default("Proyecto personal"), outcomeEs:text("outcome_es"), details:text("details").notNull().default("[]"), detailsEs:text("details_es").notNull().default("[]"), stack:text("stack").notNull().default("[]"), href:text("href").notNull().default("#"), repo:text("repo"), mediaUrl:text("media_url"), mediaType:text("media_type"), mediaAlt:text("media_alt"), featured:integer("featured",{mode:"boolean"}).notNull().default(false), published:integer("published",{mode:"boolean"}).notNull().default(true), sortOrder:integer("sort_order").notNull().default(100), createdAt:text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`), updatedAt:text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`) });
+export const projects = sqliteTable("projects", { code:text("code").notNull().default(""), accent:text("accent").notNull().default("cyan"), media:text("media").notNull().default("[]"), hotspotX:integer("hotspot_x"), hotspotY:integer("hotspot_y"), accentColor:text("accent_color").notNull().default(""), previewUrl:text("preview_url").notNull().default(""), id: integer("id").primaryKey({ autoIncrement:true }), title:text("title").notNull(), titleEs:text("title_es"), category:text("category").notNull().default("Pure Programming"), description:text("description").notNull().default(""), descriptionEs:text("description_es"), outcome:text("outcome").notNull().default("Proyecto personal"), outcomeEs:text("outcome_es"), details:text("details").notNull().default("[]"), detailsEs:text("details_es").notNull().default("[]"), stack:text("stack").notNull().default("[]"), href:text("href").notNull().default("#"), repo:text("repo"), mediaUrl:text("media_url"), mediaType:text("media_type"), mediaAlt:text("media_alt"), featured:integer("featured",{mode:"boolean"}).notNull().default(false), published:integer("published",{mode:"boolean"}).notNull().default(true), sortOrder:integer("sort_order").notNull().default(100), createdAt:text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`), updatedAt:text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`) });
 
 export const customSections = sqliteTable("custom_sections", {
   kind: text("kind").notNull().default("custom"),
@@ -26,6 +26,8 @@ export const customSections = sqliteTable("custom_sections", {
 
 export const siteSettings = sqliteTable("site_settings", {
   palette: text("palette").notNull().default("{}"),
+  categoryColors: text("category_colors").notNull().default("{}"),
+  defaultPresentation: text("default_presentation").notNull().default("immersive"),
   radarCooldownSeconds: integer("radar_cooldown_seconds").notNull().default(15),
   previewSeconds: integer("preview_seconds").notNull().default(6),
   revealStyle: text("reveal_style").notNull().default("pixels"),
