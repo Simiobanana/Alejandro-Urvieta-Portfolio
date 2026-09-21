@@ -39,7 +39,7 @@ function SvgTree({realm}:{realm:Realm}){return <svg className="ygg-svg" viewBox=
 
 export default function ImmersiveTree({projects,settings,lang,realm,effects,onOpen}:{projects:StoredProject[];settings:Settings;lang:Lang;realm:Realm;effects:boolean;onOpen:(p:StoredProject)=>void}){
  const [renderer,setRenderer]=useState<Renderer>("checking"),[hovered,setHovered]=useState<StoredProject|null>(null),[ready,setReady]=useState(false);
- useEffect(()=>{let cancelled=false;(async()=>{const nav=navigator as Navigator&{deviceMemory?:number;connection?:{saveData?:boolean}};const reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;if(reduced||nav.connection?.saveData||!canUseWebGL()||(nav.hardwareConcurrency||8)<6||(nav.deviceMemory||8)<4){setRenderer("svg");return;}try{const {getGPUTier}=await import("detect-gpu");const tier=await getGPUTier();if(!cancelled)setRenderer(tier.tier>=2?"webgl":"svg");}catch{if(!cancelled)setRenderer("svg");}})();return()=>{cancelled=true;};},[]);
+ useEffect(()=>{queueMicrotask(()=>{const nav=navigator as Navigator&{connection?:{saveData?:boolean}};const reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;setRenderer(reduced||nav.connection?.saveData||!canUseWebGL()?"svg":"webgl");});},[]);
  const ordered=useMemo(()=>[...projects].sort((a,b)=>Number(b.featured)-Number(a.featured)||a.sortOrder-b.sortOrder),[projects]);
  const preview=hovered&&(effects
   ? hovered.previewUrl||hovered.media.find(m=>m.type.startsWith("video"))?.url||hovered.media[0]?.url||hovered.mediaUrl
