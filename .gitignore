@@ -46,3 +46,4 @@ next-env.d.ts
 
 *.tsbuildinfo
 dependency-audit.json
+*.blend1

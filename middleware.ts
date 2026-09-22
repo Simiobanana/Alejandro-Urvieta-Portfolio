@@ -7,7 +7,7 @@ export function middleware(request:NextRequest) {
   response.headers.set("Referrer-Policy","strict-origin-when-cross-origin");
   response.headers.set("Permissions-Policy","camera=(), microphone=(), geolocation=()");
   if(request.nextUrl.pathname.startsWith("/editor")||request.nextUrl.pathname.startsWith("/api/admin/"))response.headers.set("Cache-Control","private, no-store");
-  if(process.env.NODE_ENV==="production") response.headers.set("Content-Security-Policy","default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: blob:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests");
+  if(process.env.NODE_ENV==="production") response.headers.set("Content-Security-Policy","default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: blob:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests");
   if(request.nextUrl.pathname.startsWith("/media/"))response.headers.set("Content-Security-Policy","default-src 'none'; sandbox");
   return response;
 }

@@ -1,0 +1,59 @@
+{
+  "file": "yggdrasil-web.glb",
+  "bytes": 1129828,
+  "sha256": "d8160396e55171283a41b2fcde066e3a7ba63a9ce6e0ad2495017888aa9f36af",
+  "errors": 0,
+  "warnings": 1,
+  "drawPrimitives": 5,
+  "anchors": 12,
+  "materials": 5,
+  "textures": 1,
+  "externalResources": 0,
+  "extensions": [
+    "KHR_draco_mesh_compression"
+  ],
+  "issues": [
+    {
+      "code": "UNSUPPORTED_EXTENSION",
+      "message": "Cannot validate an extension as it is not supported by the validator: 'KHR_draco_mesh_compression'.",
+      "severity": 2,
+      "pointer": "/extensionsUsed/0"
+    },
+    {
+      "code": "MESH_PRIMITIVE_GENERATED_TANGENT_SPACE",
+      "message": "Material requires a tangent space but the mesh primitive does not provide it. Runtime-generated tangent space may be non-portable across implementations.",
+      "severity": 1,
+      "pointer": "/meshes/0/primitives/0/material"
+    },
+    {
+      "code": "UNUSED_OBJECT",
+      "message": "This object may be unused.",
+      "severity": 2,
+      "pointer": "/bufferViews/0"
+    },
+    {
+      "code": "UNUSED_OBJECT",
+      "message": "This object may be unused.",
+      "severity": 2,
+      "pointer": "/bufferViews/2"
+    },
+    {
+      "code": "UNUSED_OBJECT",
+      "message": "This object may be unused.",
+      "severity": 2,
+      "pointer": "/bufferViews/3"
+    },
+    {
+      "code": "UNUSED_OBJECT",
+      "message": "This object may be unused.",
+      "severity": 2,
+      "pointer": "/bufferViews/4"
+    },
+    {
+      "code": "UNUSED_OBJECT",
+      "message": "This object may be unused.",
+      "severity": 2,
+      "pointer": "/bufferViews/5"
+    }
+  ]
+}
