@@ -79,3 +79,4 @@ body{font-family:var(--font-body),Manrope,sans-serif}.portfolio-v2{--night:#0b0e
  .mobile-world-list button i{flex:0 0 6px;height:6px;background:var(--hotspot);border-radius:50%;box-shadow:0 0 8px var(--hotspot)}
  .mobile-world-list button:focus-visible{outline:2px solid var(--hotspot);outline-offset:2px}
 }
+@media(min-width:701px){.ygg-scene .hotspot-label{width:clamp(86px,11vw,160px);max-width:clamp(86px,11vw,160px);padding:4px 3px;box-sizing:border-box}}
