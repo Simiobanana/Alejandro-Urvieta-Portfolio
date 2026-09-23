@@ -142,13 +142,14 @@ for i in range(7):
         seam.append((p[0]+math.cos(a)*offset,p[1]+math.sin(a)*offset,p[2]))
     tube(sap,seam,.013,.008,4,34,color=(1,.53,.10),ridge=0)
 
-# Root fan wraps an eroded floating bed. Forking tips create an unmistakable root silhouette.
+# Roots follow the elliptical terrace and remain above its highest surface (-.32).
+# Shorter forks end inside the rim, avoiding roots emerging through the rock walls.
 for i in range(15):
-    a=i/15*math.tau+random.uniform(-.13,.13);length=random.uniform(3.1,5.1)
-    p=[(math.cos(a)*.4,math.sin(a)*.4,1.2),(math.cos(a)*1.3,math.sin(a)*1.3,.08),(math.cos(a+.1)*length*.63,math.sin(a+.1)*length*.63,-.38),(math.cos(a+.23)*length,math.sin(a+.23)*length,-.68)]
+    a=i/15*math.tau+random.uniform(-.13,.13);length=random.uniform(2.8,3.85)
+    p=[(math.cos(a)*.4,math.sin(a)*.4,1.2),(math.cos(a)*1.3,math.sin(a)*1.3*.62,.18),(math.cos(a+.1)*length*.63,math.sin(a+.1)*length*.63*.62,-.12),(math.cos(a+.23)*length,math.sin(a+.23)*length*.62,-.24)]
     tube(wood,p,.34,.024,8,22)
     for side in (-1,1):
-        start=Vector(p[2]);end=Vector(p[3])+Vector((math.cos(a+side*.6),math.sin(a+side*.6),-.12))*.65
+        start=Vector(p[2]);end=Vector(p[3])+Vector((math.cos(a+side*.6),math.sin(a+side*.6)*.62,-.035))*.35
         tube(wood,[start,(start+end)/2+Vector((0,0,.12)),end],.10,.007,6,12)
     if i%2==0:tube(sap,[(x,y,z+.12) for x,y,z in p],.011,.004,4,22)
 

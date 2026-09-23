@@ -5,8 +5,8 @@ Modelo original construido en Blender 3.6.22 para el portafolio: tronco entrelaz
 ## Archivos
 
 - `deliverables/Yggdrasil_Alejandro_Urvieta.blend`: fuente editable con seis mallas/materiales, doce anclajes y estudio de iluminación separado. La textura de corteza está empaquetada.
-- `deliverables/yggdrasil-web.glb`: 108.454 triángulos; 1.170.436 bytes.
-- `deliverables/yggdrasil-mobile.glb`: 55.779 triángulos; 940.864 bytes.
+- `deliverables/yggdrasil-web.glb`: 108.454 triángulos; 1.170.280 bytes.
+- `deliverables/yggdrasil-mobile.glb`: 55.779 triángulos; 940.648 bytes.
 - `deliverables/yggdrasil-poster.webp`: render transparente usado durante la carga o sin WebGL.
 - `deliverables/yggdrasil-preview.png` y `yggdrasil-three-quarter.png`: vistas de estudio en Blender.
 - `deliverables/anchors.json`: posiciones de los doce nodos `ProjectAnchor_01` a `ProjectAnchor_12`, en coordenadas glTF Y-up.
@@ -30,7 +30,7 @@ Después de regenerar, copiar ambos GLB y el WebP a `public/models/yggdrasil/`. 
 
 `app/yggdrasil-model.tsx` carga el modelo al acercarse a la sección, usa la versión reducida en pantallas de hasta 700 px y limita la resolución de render y la animación a 30 fps. Deja de dibujar fuera de pantalla o con la pestaña oculta. Con efectos apagados, solo vuelve a dibujar al cambiar el tamaño o durante la transición de iluminación. El movimiento del puntero y el cambio de tema no recrean el contexto ni recargan el GLB.
 
-`app/immersive-tree.tsx` proyecta los anclajes sobre los accesos a proyectos; respeta las coordenadas manuales del editor. En teléfono también ofrece una lista legible de accesos. Sin WebGL, con ahorro de datos o movimiento reducido se utiliza el render WebP del mismo árbol. La vista de estudio emplea bloom; el render web utiliza iluminación directa y materiales emisivos sin postprocesado de bloom para reducir coste.
+`app/immersive-tree.tsx` proyecta los anclajes sobre los accesos a proyectos; respeta las coordenadas manuales del editor. En teléfono también ofrece una lista legible de accesos. La presentación inicial es la nueva ilustración 2D. El selector permite elegir el modelo 3D o su render ligero WebP; si WebGL no está disponible, se utiliza el render ligero. La vista de estudio emplea bloom; el render web utiliza iluminación directa y materiales emisivos sin postprocesado de bloom para reducir coste.
 
 ## Validación y límites
 
