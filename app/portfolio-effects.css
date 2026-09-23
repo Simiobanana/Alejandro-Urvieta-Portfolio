@@ -80,3 +80,44 @@ body{font-family:var(--font-body),Manrope,sans-serif}.portfolio-v2{--night:#0b0e
  .mobile-world-list button:focus-visible{outline:2px solid var(--hotspot);outline-offset:2px}
 }
 @media(min-width:701px){.ygg-scene .hotspot-label{width:clamp(86px,11vw,160px);max-width:clamp(86px,11vw,160px);padding:4px 3px;box-sizing:border-box}}
+/* One continuous sky for the introduction and the floating world. */
+.cosmic-journey{position:relative;isolation:isolate;background:radial-gradient(ellipse at 22% 35%,#25204788,transparent 38%),radial-gradient(ellipse at 76% 67%,#183b4544,transparent 38%),linear-gradient(#060915,#0c1022 55%,#0b1520);transition:background-color .8s}
+.portfolio-v2[data-realm="light"] .cosmic-journey{background:radial-gradient(ellipse at 20% 33%,#9799bf55,transparent 45%),linear-gradient(#172035,#626f90 53%,#a6a8ad 78%,#536c76)}
+.cosmic-journey .cosmic-intro,.cosmic-journey .ygg-scene,.cosmic-journey .ygg-scene[data-realm="light"]{background:none;isolation:auto}
+.cosmic-intro:after,.intro-stars,.cosmic-field,.ygg-scene .tree-ground{display:none}
+.cosmic-journey>.interactive-stars{position:absolute;z-index:0;pointer-events:none;touch-action:pan-y}
+.cosmic-intro{touch-action:pan-y}
+.cosmic-intro .intro-copy{z-index:1}
+.intro-cue{z-index:5;min-width:72px;min-height:76px;justify-content:center;touch-action:manipulation;cursor:pointer}
+.ygg-scene .world-preview-shade{background:radial-gradient(ellipse,transparent 45%,#090d1826);opacity:0;transition:opacity .45s}
+.ygg-scene:has(.world-preview[data-visible="true"]) .world-preview-shade{opacity:1}
+.island-mist{position:absolute;z-index:4;left:21%;right:15%;top:75%;height:20%;pointer-events:none;opacity:.65;mask-image:linear-gradient(transparent,#000 28%,#000 70%,transparent)}
+.island-mist i{position:absolute;inset:0;background:radial-gradient(ellipse at 30% 50%,#6795c846,transparent 54%),radial-gradient(ellipse at 72% 52%,#6c54bb35,transparent 53%);border-radius:50%;transform:rotate(-7deg)}
+.island-mist i+ i{transform:rotate(9deg) scale(.9);opacity:.6}
+.portfolio-v2[data-effects="on"] .island-mist i{animation:island-drift 19s ease-in-out infinite alternate}
+.portfolio-v2[data-effects="on"] .island-mist i+i{animation-delay:-11s;animation-duration:25s}
+@keyframes island-drift{from{transform:translateX(-5%) rotate(-7deg)}to{transform:translateX(8%) rotate(5deg)}}
+.ygg-scene .scene-copy{max-width:260px;bottom:34px}
+.ygg-scene .scene-copy h2{font-size:clamp(27px,3vw,43px)}
+.tree-view-tools{position:absolute;z-index:20;right:18px;bottom:18px;display:flex;align-items:center;gap:6px;padding:5px 7px;border:1px solid #ffffff24;border-radius:20px;background:#0c1624bb;color:#e4eaf1;font-size:10px}
+.tree-view-tools button{border:0;background:none;color:inherit;padding:7px 9px;cursor:pointer;border-radius:14px;min-height:32px}
+.tree-view-tools button[aria-pressed="true"]{background:#ffffff20;color:#fff}
+.tree-view-tools>.renderer-note{position:absolute;top:100%;bottom:auto;right:8px;width:max-content;font-size:9px}
+.ygg-scene[data-markers="runes"] .world-hotspot,.ygg-scene[data-markers="runes"] .world-hotspot.is-featured{width:44px;height:44px}
+.ygg-scene[data-markers="runes"] .hotspot-core{inset:12px;border-radius:3px;transform:rotate(45deg);animation:none;background:#15222c;border-color:var(--hotspot);box-shadow:0 0 13px color-mix(in srgb,var(--hotspot) 55%,transparent)}
+.ygg-scene[data-markers="runes"] .hotspot-core:before,.ygg-scene[data-markers="runes"] .hotspot-core:after{display:none}
+.rune-index{font-size:9px;color:#fff;transform:rotate(-45deg);line-height:1}
+.ygg-scene[data-markers="runes"] .world-hotspot:hover .hotspot-core{animation:none;background:var(--hotspot)}
+.ygg-scene .hotspot-label{top:calc(100% - 1px);font-size:11px;opacity:1;text-shadow:0 1px 4px #000,0 0 12px #000;background:radial-gradient(ellipse,#080d16cc,transparent 76%)}
+.ygg-scene .hotspot-label strong{font-size:11px}
+.ygg-scene .hotspot-label small{color:#d8dce8;font-size:8px}
+@media(max-width:700px){
+ .ygg-scene .scene-copy{top:70px;bottom:auto;max-width:none}
+ .ygg-scene .scene-copy h2{font-size:29px}
+ .ygg-scene .mobile-world-list{bottom:64px}
+ .ygg-scene .island-mist{display:none}
+ .tree-view-tools{bottom:14px;right:16px}
+}
+.island-mist{mask-image:radial-gradient(ellipse,#000 24%,transparent 72%)}
+.portfolio-v2[data-presentation="standard"] .cosmic-journey>.interactive-stars{height:100svh}
+.portfolio-v2[data-presentation="standard"] .standard-work{position:relative;z-index:1;background:var(--bg)}

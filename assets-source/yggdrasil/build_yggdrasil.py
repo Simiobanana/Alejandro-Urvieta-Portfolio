@@ -3,6 +3,7 @@ Run: blender --background --python assets-source/yggdrasil/build_yggdrasil.py
 No downloaded meshes, images, or external asset libraries.
 """
 import bpy, math, random, json, os
+from bpy_extras.object_utils import world_to_camera_view
 import numpy as np
 from mathutils import Vector
 from pathlib import Path
@@ -30,9 +31,13 @@ vein=material('Amber sap | emission',(.85,.39,.075),.3,.35,2.2)
 teal=material('World lights | emission',(.045,.8,.60),.15,.3,4)
 rock=material('Root stone | obsidian',(.038,.071,.080),.25,.86)
 # Vertex color brings all leaf variation into one material/draw call.
-for m in (bark,leaves,rock):
+water=material('Waterfall | astral current',(.06,.52,.56),.12,.25,.7)
+water.blend_method='BLEND';water.use_screen_refraction=False;water.use_backface_culling=False
+for m in (bark,leaves,rock,water):
     attr=m.node_tree.nodes.new('ShaderNodeVertexColor'); attr.layer_name='Tint'
     m.node_tree.links.new(attr.outputs['Color'],m.node_tree.nodes.get('Principled BSDF').inputs['Base Color'])
+
+water.node_tree.links.new(next(n for n in water.node_tree.nodes if n.bl_idname=='ShaderNodeVertexColor').outputs['Alpha'],water.node_tree.nodes.get('Principled BSDF').inputs['Alpha'])
 
 # A small, original, seamless bark normal map; real glTF texture, no Blender-only nodes.
 N=512
@@ -51,7 +56,7 @@ bark.node_tree.links.new(tex.outputs['Color'],nm.inputs['Color']);bark.node_tree
 
 class Geometry:
     def __init__(self): self.v=[];self.f=[];self.c=[];self.uv=[]
-    def vertex(self,co,color,uv=(0,0)): self.v.append(tuple(co));self.c.append((*color,1));self.uv.append(uv);return len(self.v)-1
+    def vertex(self,co,color,uv=(0,0)): self.v.append(tuple(co));self.c.append((*color,1) if len(color)==3 else color);self.uv.append(uv);return len(self.v)-1
     def object(self,name,mat):
         mesh=bpy.data.meshes.new(name);mesh.from_pydata(self.v,[],self.f);mesh.update()
         obj=bpy.data.objects.new(name,mesh);asset.objects.link(obj);obj.data.materials.append(mat)
@@ -67,7 +72,9 @@ class Geometry:
         for poly in mesh.polygons: poly.use_smooth=True
         return obj
 
-wood,foliage,sap,lights,stones=Geometry(),Geometry(),Geometry(),Geometry(),Geometry()
+wood,foliage,sap,lights,stones,river=Geometry(),Geometry(),Geometry(),Geometry(),Geometry(),Geometry()
+# Front-facing branch tips leave deliberate gaps for project runes.
+anchor_specs=[(-6.4,-2.8,7.35),(-4.1,-3.0,5.75),(-2.9,-2.5,8.8),(-.6,-2.0,10.1),(1.7,-2.4,8.9),(4.0,-2.8,8.0),(5.1,-2.7,5.8),(7.0,-1.7,7.1)]
 
 def smooth(points, count):
     p=[Vector(x) for x in points]; result=[]
@@ -111,6 +118,7 @@ def cluster(center,scale=1,count=62):
     for _ in range(count):
         a=random.random()*math.tau;rad=math.sqrt(random.random())*scale
         p=c+Vector((math.cos(a)*rad,math.sin(a)*rad*.65,random.uniform(-.26,.34)*scale))
+        if any((p-Vector(a)).length<.65 for a in anchor_specs):continue
         leaf(p,random.uniform(.22,.46),(math.cos(a),math.sin(a),random.uniform(.2,1)))
 
 def gem(g,center,r,color=(.05,.8,.6)):
@@ -145,13 +153,13 @@ for i in range(15):
     if i%2==0:tube(sap,[(x,y,z+.12) for x,y,z in p],.011,.004,4,22)
 
 # Twelve primary limbs: asymmetry in depth but a deliberate broad, vaulted crown.
-tips=[]
+tips=[];primary_paths=[]
 for i in range(12):
     a=i/12*math.tau+.12; length=random.uniform(5.7,7.5)
     startz=3.1+(i%4)*.52; top=7.0+1.5*(1-abs(math.cos(a))*.40)+random.uniform(-.35,.35)
     start=Vector((math.cos(a)*.40,math.sin(a)*.40,startz))
     p=[start,(math.cos(a)*1.45,math.sin(a)*1.05,startz+.75),(math.cos(a+.10)*length*.62,math.sin(a+.10)*length*.45,top-.65),(math.cos(a+.19)*length,math.sin(a+.19)*length*.63,top)]
-    pts=tube(wood,p,.43,.042,10,28,color=(.25,.155,.077))
+    pts=tube(wood,p,.43,.042,10,28,color=(.25,.155,.077));primary_paths.append(pts)
     if i%2==0:tube(sap,[(q.x,q.y-.02,q.z+.14*(1-k/(len(pts)-1))) for k,q in enumerate(pts)],.013,.004,4,28)
     for j in range(4):
         t=.42+j*.16; base=pts[int(t*(len(pts)-1))]; side=-1 if j%2 else 1
@@ -185,20 +193,58 @@ for i in range(70):
     p=random.choice(tips)+Vector((random.uniform(-.4,.4),random.uniform(-.25,.25),random.uniform(-.5,.3)))
     gem(sap,p,.016+random.random()*.025,(1,.45,.08))
 
-# Low-profile, faceted foundation, not a heavy terrain mesh.
-for i in range(13):
-    a=i*2.399; r=.9+math.sqrt(i/13)*2.25;c=Vector((math.cos(a)*r,math.sin(a)*r*.7,-.67))
-    start=len(stones.v);s=random.uniform(.55,1.15)
-    for k in range(8):
-        angle=k/8*math.tau
-        stones.vertex(c+Vector((math.cos(angle)*s,math.sin(angle)*s*.8,random.uniform(-.13,.19))),(.06,.1,.105))
-    stones.vertex(c+Vector((0,0,-.6*s)),(.025,.045,.056));stones.vertex(c+Vector((0,0,.25*s)),(.08,.14,.14))
-    for k in range(8):stones.f.extend([(start+k,start+(k+1)%8,start+9),(start+(k+1)%8,start+k,start+8)])
+# Deliberate sockets grow from actual limbs; markers no longer float around the trunk.
+for endpoint in anchor_specs:
+    tip=Vector(endpoint)
+    candidates=[q for branch in primary_paths for q in branch[12:]]
+    base=Vector((tip.x*.13,0,max(3.1,tip.z-3.1)))
+    mid=Vector((tip.x*.65,tip.y*.65,tip.z-.8))
+    tube(wood,[base,mid,tip],.25,.028,8,22)
+    tube(sap,[base+Vector((0,-.05,.055)),mid+Vector((0,-.04,.03)),tip],.012,.008,4,14)
 
-objects=[wood.object('01 | Heartwood and roots',bark),foliage.object('02 | Jade and bronze leaf canopy',leaves),sap.object('03 | Golden sap and seed lights',vein),lights.object('04 | Turquoise hanging world seeds',teal),stones.object('05 | Rootstone foundation',rock)]
+# A single eroded island: mossy upper terrace and tapered stratified underside.
+segments=40; rings=[]
+for level,(radius,z) in enumerate([(5.15,-.48),(5.0,-1.05),(4.1,-2.15),(2.8,-3.4),(.65,-4.65)]):
+    ring=[]
+    for i in range(segments):
+        angle=i/segments*math.tau; wobble=1+.08*math.sin(angle*5+.4)+.055*math.sin(angle*9)
+        depth=z+random.uniform(-.16,.16)
+        tint=(.065,.145,.105) if level==0 else ((.105,.115,.15) if level==1 else (.06,.075,.11))
+        shade=random.uniform(.65,1.3)
+        ring.append(stones.vertex((math.cos(angle)*radius*wobble,math.sin(angle)*radius*.66*wobble,depth),tuple(c*shade for c in tint)))
+    rings.append(ring)
+center=stones.vertex((0,0,-.37),(.095,.19,.125))
+for i in range(segments):stones.f.append((center,rings[0][i],rings[0][(i+1)%segments]))
+for j in range(len(rings)-1):
+    for i in range(segments):
+        a,b=rings[j][i],rings[j][(i+1)%segments];c,d=rings[j+1][i],rings[j+1][(i+1)%segments]
+        stones.f.extend([(a,c,b),(b,c,d)])
+stones.f.append(tuple(reversed(rings[-1])))
+# Rock shelves and short moss tufts make the upper rim read as land.
+for i in range(65):
+    a=random.random()*math.tau;r=random.uniform(3.4,4.75)
+    p=Vector((math.cos(a)*r,math.sin(a)*r*.65,-.3))
+    if abs(p.x-2.0)<.9 and p.y<-.7:continue
+    for j in range(3):leaf(p+Vector((j*.06,0,0)),random.uniform(.12,.24),(math.cos(a),math.sin(a),1.8))
+# A small river becomes two layered falls. Vertex alpha fades the water into the void.
+for waterfall in range(2):
+    x=2.25 if waterfall==0 else -3.0;y=-3.45 if waterfall==0 else -2.95
+    for strand in range(11 if waterfall==0 else 5):
+        offset=(strand-5)*.085 if waterfall==0 else (strand-2)*.07
+        width=random.uniform(.035,.095);start=len(river.v)
+        for j in range(30):
+            t=j/29
+            if t<.2:
+                u=t/.2;pos=Vector((x+offset-.45*(1-u),y+1.8*(1-u),-.3-u*.18));fade=.65
+            else:
+                u=(t-.2)/.8;pos=Vector((x+offset+math.sin(u*3+strand)*.07,y-u*.35,-.48-u*(5.1 if waterfall==0 else 3.9)));fade=.76*min(1,(1-u)*2)**1.5
+            tint=(.12+strand*.009,.58+strand*.014,.64+strand*.012,fade)
+            river.vertex(pos+Vector((-width,0,0)),tint);river.vertex(pos+Vector((width,0,0)),tint)
+            if j:river.f.append((start+(j-1)*2,start+(j-1)*2+1,start+j*2+1,start+j*2))
+objects=[wood.object('01 | Heartwood and roots',bark),foliage.object('02 | Jade and bronze leaf canopy',leaves),sap.object('03 | Golden sap and seed lights',vein),lights.object('04 | Turquoise hanging world seeds',teal),stones.object('05 | Floating island strata',rock),river.object('06 | Astral waterfalls',water)]
+for poly in objects[4].data.polygons:poly.use_smooth=False
 leaves.use_backface_culling=False
-# Named empties export as lightweight GLTF nodes for current and future project attachment.
-anchors=[(-5.4,-1.4,7.35),(-3.1,-2.0,7.6),(-1.55,-1.2,8.8),(1.45,-1.3,8.9),(3.6,-1.8,7.7),(5.55,-1.4,7.25),(-4.35,-2.15,6.1),(4.45,-2.0,6.0),(0,-.82,5.9),(-2.45,-1.9,5.4),(2.4,-1.8,5.35),(0,-1.12,2.75)]
+anchors=anchor_specs+[tuple(primary_paths[i][-2]) for i in (1,4,7,10)]
 for i,p in enumerate(anchors):
     ob=bpy.data.objects.new('ProjectAnchor_%02d'%(i+1),None);asset.objects.link(ob);ob.location=p;ob.empty_display_type='SPHERE';ob.empty_display_size=.13;ob['reserved_for_project']=True
 
@@ -216,12 +262,12 @@ area('Front | softbox',(1,-10,5),(.55,.69,1),650,7)
 scene=bpy.context.scene;scene.world.color=(.03,.03,.03);scene.world.use_nodes=True
 scene.world.node_tree.nodes['Background'].inputs[0].default_value=(.012,.021,.036,1)
 scene.world.node_tree.nodes['Background'].inputs[1].default_value=.35
-bpy.ops.object.camera_add(location=(.4,-24,11.2));cam=bpy.context.object;studio_obj(cam);cam.name='CAM | Portfolio three-quarter';cam.rotation_euler=(Vector((0,0,4.5))-cam.location).to_track_quat('-Z','Y').to_euler();cam.data.type='ORTHO';cam.data.ortho_scale=20;scene.camera=cam
+bpy.ops.object.camera_add(location=(.4,-24,10));cam=bpy.context.object;studio_obj(cam);cam.name='CAM | Portfolio three-quarter';cam.rotation_euler=(Vector((0,0,2.6))-cam.location).to_track_quat('-Z','Y').to_euler();cam.data.type='ORTHO';cam.data.ortho_scale=20;scene.camera=cam
 scene.render.engine='BLENDER_EEVEE';scene.eevee.use_gtao=True;scene.eevee.gtao_distance=3;scene.eevee.gtao_factor=1.35;scene.eevee.use_bloom=True;scene.eevee.bloom_intensity=.13;scene.eevee.bloom_radius=5;scene.eevee.taa_render_samples=64
 scene.view_settings.view_transform='Filmic';scene.view_settings.look='Medium High Contrast';scene.view_settings.exposure=.15
-scene.render.resolution_x=1600;scene.render.resolution_y=1150;scene.render.resolution_percentage=100
+scene.render.resolution_x=1600;scene.render.resolution_y=1480;scene.render.resolution_percentage=100
 scene.render.image_settings.file_format='PNG';scene.render.film_transparent=True
-scene['asset_notes']='Original Blender geometry. Z-up authoring; GLB exports Y-up. 12 named anchors. Five materials, one packed original bark normal map. No external textures. Studio excluded from exports.'
+scene['asset_notes']='Original Blender geometry. Z-up authoring; GLB exports Y-up. 12 named anchors. Six materials, one packed original bark normal map. No external textures. Studio excluded from exports.'
 bpy.ops.object.select_all(action='DESELECT')
 for ob in asset.objects:ob.select_set(True)
 bpy.context.view_layer.objects.active=objects[0]
@@ -230,12 +276,18 @@ bpy.ops.wm.save_as_mainfile(filepath=str(OUT/'Yggdrasil_Alejandro_Urvieta.blend'
 def export(path):
     bpy.ops.export_scene.gltf(filepath=str(path),export_format='GLB',use_selection=True,export_yup=True,export_apply=True,export_colors=True,export_tangents=True,export_extras=True,export_cameras=False,export_lights=False,export_draco_mesh_compression_enable=True,export_draco_mesh_compression_level=6,export_draco_position_quantization=14,export_draco_normal_quantization=10,export_draco_texcoord_quantization=12,export_draco_color_quantization=8)
 export(OUT/'yggdrasil-web.glb')
+bpy.context.view_layer.update()
+layout={'aspect':1600/1480,'anchors':[]}
+for i,p in enumerate(anchors):
+    screen=world_to_camera_view(scene,cam,Vector(p))
+    layout['anchors'].append({'name':'ProjectAnchor_%02d'%(i+1),'x':screen.x,'y':1-screen.y})
+(ROOT.parent.parent/'lib'/'yggdrasil-layout.json').write_text(json.dumps(layout,indent=2))
 stats={'objects':len(objects),'materials':len({m.name for ob in objects for m in ob.data.materials}),'anchors':len(anchors),'web_triangles':sum(sum(len(p.vertices)-2 for p in ob.data.polygons) for ob in objects),'web_bytes':(OUT/'yggdrasil-web.glb').stat().st_size}
 scene.render.filepath=str(OUT/'yggdrasil-preview.png');bpy.ops.render.render(write_still=True)
 scene.render.image_settings.file_format='WEBP';scene.render.image_settings.quality=86
 bpy.data.images['Render Result'].save_render(str(OUT/'yggdrasil-poster.webp'),scene=scene)
 scene.render.image_settings.file_format='PNG'
-cam.location=(15,-20,10);cam.rotation_euler=(Vector((0,0,4.5))-cam.location).to_track_quat('-Z','Y').to_euler();scene.render.filepath=str(OUT/'yggdrasil-three-quarter.png');bpy.ops.render.render(write_still=True)
+cam.location=(15,-20,10);cam.rotation_euler=(Vector((0,0,2.6))-cam.location).to_track_quat('-Z','Y').to_euler();scene.render.filepath=str(OUT/'yggdrasil-three-quarter.png');bpy.ops.render.render(write_still=True)
 # A separate mobile export, preserving the high-detail editable .blend.
 for ob in objects:
     if ob in (objects[0],objects[1]):

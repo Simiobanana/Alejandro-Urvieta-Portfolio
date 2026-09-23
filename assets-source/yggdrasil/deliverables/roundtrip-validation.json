@@ -1,15 +1,15 @@
 [
   {
     "file": "yggdrasil-web.glb",
-    "decoded_meshes": 5,
-    "decoded_triangles": 103300,
+    "decoded_meshes": 6,
+    "decoded_triangles": 108454,
     "anchors": 12,
     "finite_coordinates": true
   },
   {
     "file": "yggdrasil-mobile.glb",
-    "decoded_meshes": 5,
-    "decoded_triangles": 52324,
+    "decoded_meshes": 6,
+    "decoded_triangles": 55779,
     "anchors": 12,
     "finite_coordinates": true
   }

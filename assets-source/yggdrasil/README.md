@@ -4,14 +4,14 @@ Modelo original construido en Blender 3.6.22 para el portafolio: tronco entrelaz
 
 ## Archivos
 
-- `deliverables/Yggdrasil_Alejandro_Urvieta.blend`: fuente editable con cinco mallas/materiales, doce anclajes y estudio de iluminación separado. La textura de corteza está empaquetada.
-- `deliverables/yggdrasil-web.glb`: 103.300 triángulos; 1.129.828 bytes.
-- `deliverables/yggdrasil-mobile.glb`: 52.324 triángulos; 908.436 bytes.
+- `deliverables/Yggdrasil_Alejandro_Urvieta.blend`: fuente editable con seis mallas/materiales, doce anclajes y estudio de iluminación separado. La textura de corteza está empaquetada.
+- `deliverables/yggdrasil-web.glb`: 108.454 triángulos; 1.170.436 bytes.
+- `deliverables/yggdrasil-mobile.glb`: 55.779 triángulos; 940.864 bytes.
 - `deliverables/yggdrasil-poster.webp`: render transparente usado durante la carga o sin WebGL.
 - `deliverables/yggdrasil-preview.png` y `yggdrasil-three-quarter.png`: vistas de estudio en Blender.
 - `deliverables/anchors.json`: posiciones de los doce nodos `ProjectAnchor_01` a `ProjectAnchor_12`, en coordenadas glTF Y-up.
 
-Los GLB contienen cinco primitivas de dibujo y una sola textura de normales de 512 × 512. La geometría usa compresión Draco. Los archivos son autónomos; el decodificador de la web se aloja en `public/draco`, sin CDN. El `.blend` usa Z-up; Blender convierte a Y-up al exportar.
+Los GLB contienen seis primitivas de dibujo y una sola textura de normales de 512 × 512. La geometría usa compresión Draco. Los archivos son autónomos; el decodificador de la web se aloja en `public/draco`, sin CDN. El `.blend` usa Z-up; Blender convierte a Y-up al exportar.
 
 ## Edición y regeneración
 
@@ -39,3 +39,5 @@ Los informes `*.validation.json` registran la validación estructural de Khronos
 El aspecto es estilizado, con hojas geométricas. El presupuesto de polígonos y la compresión reducen la carga, pero no garantizan una tasa de fotogramas idéntica en todos los equipos. El render WebP conserva la silueta sin coste 3D.
 
 Draco es una dependencia de Google bajo Apache 2.0; su licencia se conserva en `public/draco/LICENSE`. La geometría y la textura del árbol se generaron específicamente para este proyecto.
+
+La segunda revisión añade una isla continua con estratos, vegetación y dos cascadas, y ocho ramas de acceso explícitas. El generador también escribe lib/yggdrasil-layout.json con la proyección de los anclajes en el render ligero, para mantenerlos alineados con el mismo árbol. El selector público permite comparar Ligera/3D y Runas/Orbes sin cambiar los ajustes del editor. El agua usa una modulación de luz en el shader y la bruma utiliza transformaciones CSS; ambos respetan el control de efectos.

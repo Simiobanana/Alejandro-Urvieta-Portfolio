@@ -1,12 +1,12 @@
 {
   "file": "yggdrasil-web.glb",
-  "bytes": 1129828,
-  "sha256": "d8160396e55171283a41b2fcde066e3a7ba63a9ce6e0ad2495017888aa9f36af",
+  "bytes": 1170436,
+  "sha256": "41a97611aa377911b74e85e5d0f45024934a12556be35f15330a2c7a246a8f36",
   "errors": 0,
   "warnings": 1,
-  "drawPrimitives": 5,
+  "drawPrimitives": 6,
   "anchors": 12,
-  "materials": 5,
+  "materials": 6,
   "textures": 1,
   "externalResources": 0,
   "extensions": [
@@ -54,6 +54,12 @@
       "message": "This object may be unused.",
       "severity": 2,
       "pointer": "/bufferViews/5"
+    },
+    {
+      "code": "UNUSED_OBJECT",
+      "message": "This object may be unused.",
+      "severity": 2,
+      "pointer": "/bufferViews/6"
     }
   ]
 }

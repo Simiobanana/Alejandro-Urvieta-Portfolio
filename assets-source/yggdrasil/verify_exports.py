@@ -9,7 +9,7 @@ for filename in ('yggdrasil-web.glb', 'yggdrasil-mobile.glb'):
     bpy.ops.import_scene.gltf(filepath=str(base / filename))
     meshes = [o for o in bpy.context.scene.objects if o.type == 'MESH']
     anchors = [o for o in bpy.context.scene.objects if o.name.startswith('ProjectAnchor_')]
-    assert len(meshes) == 5 and len(anchors) == 12
+    assert len(meshes) == 6 and len(anchors) == 12
     assert all(math.isfinite(c) for o in meshes for v in o.data.vertices for c in v.co)
     triangles = sum(sum(len(p.vertices)-2 for p in o.data.polygons) for o in meshes)
     reports.append({'file': filename, 'decoded_meshes': len(meshes), 'decoded_triangles': triangles,
