@@ -121,3 +121,7 @@ body{font-family:var(--font-body),Manrope,sans-serif}.portfolio-v2{--night:#0b0e
 .island-mist{mask-image:radial-gradient(ellipse,#000 24%,transparent 72%)}
 .portfolio-v2[data-presentation="standard"] .cosmic-journey>.interactive-stars{height:100svh}
 .portfolio-v2[data-presentation="standard"] .standard-work{position:relative;z-index:1;background:var(--bg)}
+@media(min-width:701px){
+ .ygg-scene .hotspot-label{width:clamp(86px,9vw,125px);max-width:clamp(86px,9vw,125px)}
+ .ygg-scene .hotspot-label[data-placement="above"]{top:auto;bottom:calc(100% - 2px)}
+}
