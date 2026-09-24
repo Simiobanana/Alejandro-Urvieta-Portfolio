@@ -1,0 +1,17 @@
+{
+  "file": "yggdrasil-realms.glb",
+  "sha256": "014fa05a053a1ee50b9ebeb9b9efca7fb2239440b1c24b2e24e1d5010c5beeb7",
+  "meshes": 10,
+  "triangles": 102086,
+  "bytes": 1226732,
+  "finite_coordinates": true,
+  "anchors": [
+    "Realm_Programming",
+    "Tree_Heart"
+  ],
+  "policy": {
+    "max_triangles": 120000,
+    "max_bytes": 1600000,
+    "external_assets": false
+  }
+}
