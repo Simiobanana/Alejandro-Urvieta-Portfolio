@@ -84,13 +84,14 @@ def smooth(points, count):
         result.append(.5*((2*b)+(-a+c)*u+(2*a-5*b+4*c-d)*u*u+(-a+3*b-3*c+d)*u*u*u))
     return result
 
-def tube(g,points,r0,r1,sides=8,steps=18,color=(.22,.135,.075),ridge=.08):
+def tube(g,points,r0,r1,sides=8,steps=18,color=(.22,.135,.075),ridge=.08,buried_start=False):
     pts=smooth(points,steps); start=len(g.v); phase=random.uniform(0,6.28);length=sum((pts[i]-pts[i-1]).length for i in range(1,len(pts)))
     for i,p in enumerate(pts):
         t=i/(len(pts)-1); tangent=(pts[min(i+1,len(pts)-1)]-pts[max(0,i-1)]).normalized()
         axis=Vector((0,1,0)) if abs(tangent.y)<.9 else Vector((1,0,0))
         u=tangent.cross(axis).normalized();v=tangent.cross(u).normalized()
         radius=(r0*(1-t)**1.08+r1*t)*(1+.045*math.sin(t*18+phase))
+        if buried_start:radius*=min(1,.18+t*8)
         for j in range(sides):
             a=j/sides*math.tau; rr=radius*(1+ridge*math.sin(a*5+t*3+phase))
             shade=.74+.27*(math.sin(a*3+phase)*.5+.5)+.07*math.sin(t*40)
@@ -126,8 +127,7 @@ def gem(g,center,r,color=(.05,.8,.6)):
     for d in [(0,0,1.5),(1,0,0),(0,1,0),(-1,0,0),(0,-1,0),(0,0,-1.5)]:g.vertex(c+Vector(d)*r,color)
     for i in range(4):g.f.extend([(s,s+1+i,s+1+(i+1)%4),(s+5,s+1+(i+1)%4,s+1+i)])
 
-# Yggdrasil of three realms: first finished realm, kept separate from version one.
-# Art target: a sculptural, asymmetrical tree with a warm arcane observatory.
+# Yggdrasil of three realms: continuous trunk and load-bearing root cradles.
 random.seed(9317)
 anchor_specs=[]
 bronze=material('Observatory | brushed antique brass',(.38,.22,.082),.72,.38)
@@ -135,6 +135,15 @@ ivory=material('Observatory | carved limestone',(.40,.41,.32),.08,.8)
 mossmat=material('Terrace | soft moss',(.09,.19,.075),0,.95)
 slatemat=material('Instruments | midnight enamel',(.024,.068,.083),.45,.32)
 metal,masonry,moss,slate=Geometry(),Geometry(),Geometry(),Geometry()
+crystals,portal=Geometry(),Geometry()
+crystalmat=material('Crystals | spectral mineral',(.15,.3,.55),.28,.24,.35)
+portalmat=material('Portal | threshold',(.06,.18,.25),.15,.4,1.15)
+for m in (crystalmat,portalmat,teal):
+    attr=m.node_tree.nodes.new('ShaderNodeVertexColor');attr.layer_name='Tint'
+    m.node_tree.links.new(attr.outputs['Color'],m.node_tree.nodes.get('Principled BSDF').inputs['Base Color'])
+# glTF supports vertex tint for base color, but not vertex-driven emission.
+# Keep the authored material emission color so browsers preserve the minerals
+# and portal instead of exporting their emission as clipped white light.
 for m in (bronze,ivory,mossmat,slatemat):
     attr=m.node_tree.nodes.new('ShaderNodeVertexColor');attr.layer_name='Tint'
     m.node_tree.links.new(attr.outputs['Color'],m.node_tree.nodes.get('Principled BSDF').inputs['Base Color'])
@@ -223,15 +232,14 @@ def island(center,radius,depth):
         ellipsoid(moss,(cx+math.cos(a)*r*.93,cy+math.sin(a)*r*.75,cz+.025),(.19+random.random()*.25,.16+random.random()*.20,.045+random.random()*.045),(.10,.22,.095),8,4)
 
 island((1,0,0),3.45,3.8)
-# Broad buttresses: visible above the earth, branching around rather than through it.
-tube(wood,[(1,0,.08),(.9,.1,1.1),(1.35,.14,2.4),(1.1,.24,3.8),(1.5,.3,5.2),(1.1,.45,6.4)],.95,.34,18,48,color=(.25,.145,.075),ridge=.2)
-for i in range(5):
-    phase=math.tau*i/5;pts=[]
-    for j in range(12):
-        t=j/11;a=phase+t*2.1;r=.66*(1-t*.53)
-        pts.append((1+math.cos(a)*r+.24*math.sin(t*4),math.sin(a)*r+.26*t,.22+t*5.3))
-    tube(wood,pts,.34,.008,10,42,color=(.29,.18,.09),ridge=.14)
-    if i in (1,3):tube(sap,[(x,y-.16,z) for x,y,z in pts],.012,.007,4,42)
+# The leader continues into the upper crown; there is no exposed cut trunk cap.
+trunk=[(1,0,.08),(.9,.1,1.1),(1.35,.14,2.4),(1.1,.24,3.8),(1.5,.7,6.4),(.8,.9,7.9),(1.1,1,9.2)]
+tube(wood,trunk,.98,.022,18,64,color=(.27,.16,.08),ridge=.15)
+# Buttresses merge INTO the trunk below the first forks, instead of ending in spikes.
+for i in range(6):
+    a=i/6*math.tau
+    pts=[(1+math.cos(a)*.66,math.sin(a)*.66,.14),(.98+math.cos(a)*.68,.08+math.sin(a)*.55,.65),(1.10+math.cos(a)*.43,.12+math.sin(a)*.40,1.35),(1.27,.15,2.1)]
+    tube(wood,pts,.27,.045,9,24,color=(.285,.17,.085),ridge=.12)
 for i in range(11):
     a=i/11*math.tau;r=random.uniform(2.25,2.9)
     p=[(1+math.cos(a)*.48,math.sin(a)*.48,1.15),(1+math.cos(a)*1.12,math.sin(a)*.95,.36),(1+math.cos(a+.15)*r*.77,math.sin(a+.15)*r*.63,.17),(1+math.cos(a+.22)*r,math.sin(a+.22)*r*.82,.08)]
@@ -239,11 +247,18 @@ for i in range(11):
     end=Vector(p[-1]);start=Vector(p[-2])
     for side in (-1,1):tube(wood,[start,(start+end)/2+Vector((.12*side,0,.03)),end+Vector((.15*side,.14,.005))],.075,.007,6,13)
 
-# A single hero limb cradles the first realm, with a returning root underneath.
-hero=[(1,0,2.4),(-.25,-.15,3.0),(-1.75,-.1,2.55),(-3.5,-.30,2.25),(-4.6,-.4,2.6)]
-tube(wood,hero,.58,.18,14,40,color=(.27,.17,.09),ridge=.14)
-tube(wood,[(1.2,.2,.5),(.1,-.1,1.35),(-1.45,.0,1.25),(-3.7,-.20,1.8),(-4.85,-.4,2.5)],.38,.09,10,40,color=(.25,.14,.07))
-tube(sap,[(x,y-.29,z+.12) for x,y,z in hero],.025,.015,5,35)
+def cradle(center,radius,depth,path):
+    """One limb splits below the island, then roots follow the outside of its strata."""
+    cx,cy,cz=center;under=Vector((cx,cy,cz-depth-.14))
+    tube(wood,[*path,under],.43,.24,12,36,color=(.28,.17,.085),ridge=.12,buried_start=True)
+    tube(sap,[(x,y-.22,z+.05) for x,y,z in [*path,under]],.018,.009,4,32)
+    for i in range(4):
+        a=math.tau*i/4+.35
+        pts=[under,(cx+math.cos(a)*radius*.43,cy+math.sin(a)*radius*.43*.82,cz-depth*.82-.12),(cx+math.cos(a)*radius*.81,cy+math.sin(a)*radius*.81*.82,cz-depth*.42-.12),(cx+math.cos(a)*radius*1.08,cy+math.sin(a)*radius*1.08*.82,cz-.12),(cx+math.cos(a+.18)*radius*1.03,cy+math.sin(a+.18)*radius*1.03*.82,cz+.08)]
+        tube(wood,pts,.19,.018,8,26,color=(.30,.19,.09),ridge=.1)
+        p=Vector(pts[-1]);rounded_leaf(p+Vector((.02,.03,.09)),.20,Vector((math.cos(a),math.sin(a),1)),(.14,.28,.12))
+
+cradle((-4.65,-.45,2.65),1.82,1.4,[(1.35,.14,2.5),(-.45,-.15,2.65),(-2.0,-.25,1.55)])
 
 # Seven curved limbs and separated lobes form an asymmetrical vaulted canopy.
 limbs=[
@@ -256,16 +271,18 @@ limbs=[
  [(1.4,.4,5.1),(2,2.0,6.1),(3.5,3.0,6.8),(4.6,3.3,7.1)]
 ]
 tips=[]
+trunk_samples=smooth(trunk,128)
 for i,points in enumerate(limbs):
-    pts=tube(wood,points,.40 if i<5 else .30,.037,10,32,color=(.29,.18,.09),ridge=.15)
+    points[0]=tuple(min(trunk_samples,key=lambda p:abs(p.z-points[0][2])))
+    pts=smooth(points,32) if i==2 else tube(wood,points,.40 if i<5 else .30,.022,10,32,color=(.29,.18,.09),ridge=.15,buried_start=True)
     for k in (15,23,30):
         base=pts[k];side=-1 if k%2 else 1;delta=Vector((side*(.75+random.random()*.4),random.uniform(-.75,.65),.7+random.random()*.6))
         end=base+delta;mid=base+delta*.5+Vector((0,0,.20))
         tube(wood,[base,mid,end],.13,.015,7,16,color=(.3,.185,.09))
-        crown(end+Vector((0,0,.18)),1.03+random.random()*.3,185);tips.append(end)
+        crown(end+Vector((0,0,.18)),1.03+random.random()*.3,160);tips.append(end)
         for side2 in (-1,1):
             q=end+Vector((.52*side2,.25,.25));tube(wood,[end,end+Vector((.25*side2,.12,.2)),q],.035,.006,5,9)
-    crown(pts[-1]+Vector((0,0,.15)),1.3,245)
+    crown(pts[-1]+Vector((0,0,.15)),1.3,210)
     if i in (0,2,3):tube(sap,[(p.x,p.y-.11,p.z+.08) for p in pts],.014,.003,4,30)
 
 # Hanging tendrils are thin and curved, never straight needles.
@@ -325,9 +342,91 @@ for dx in (-.12,0,.12):tube(sap,[(cx-.78+dx,cy-.74,cz+.75),(cx-.76+dx,cy-.57,cz+
 for side in (-1,1):
     x=cx-.78+side*.14
     tube(lights,[(x,cy-.73,cz+1.06),(x+side*.10,cy-.73,cz+.96),(x,cy-.73,cz+.86)],.011,.011,5,9,color=(.1,.8,.65),ridge=0)
-# Steps lead out from the observatory toward the supporting bough.
-for i in range(7):
-    block(masonry,(cx+1.25+i*.19,cy-.35,cz+.24-i*.09),(.33,.70,.16),(.28+i*.008,.30+i*.008,.27),.15)
+# The circular terrace is carried by its root cradle. No decorative stairs to nowhere.
+
+# REALM II: the material sanctuary, a mineral garden and spectral light laboratory.
+ax,ay,az=5.3,-.25,3.7
+cradle((ax,ay,az),1.7,1.35,[(1.1,.25,3.65),(2.7,.2,3.5),(3.7,-.05,2.55)])
+island((ax,ay,az),1.7,1.35)
+for r,z in [(1.50,.10),(1.24,.18),(.78,.27)]:
+    ring(masonry,(ax,ay,az+z),r,.095,(.29,.33,.34),segments=48)
+ring(metal,(ax,ay,az+.29),1.25,.025,(.45,.28,.12),segments=48)
+
+def crystal(center,height,radius,color,lean=(0,0)):
+    c=Vector(center);s=len(crystals.v)
+    # Six-sided growth with a faceted pointed crown; broad bases sit in the terrace.
+    for z,r in [(0,.72),(height*.72,1)]:
+        for i in range(6):
+            a=i/6*math.tau;f=.66+.34*(i%3)/2
+            crystals.vertex(c+Vector((math.cos(a)*radius*r+lean[0]*z/height,math.sin(a)*radius*r+lean[1]*z/height,z)),tuple(v*f for v in color))
+    top=crystals.vertex(c+Vector((lean[0],lean[1],height)),tuple(min(1,v*1.45) for v in color))
+    for i in range(6):
+        j=(i+1)%6;crystals.f.extend(((s+i,s+j,s+6+j,s+6+i),(s+6+i,s+6+j,top)))
+    crystals.f.append(tuple(s+i for i in reversed(range(6))))
+
+crystal((ax,ay+.12,az+.29),1.68,.32,(.12,.52,.66),(.08,.03))
+crystal((ax-.52,ay+.29,az+.26),1.12,.25,(.40,.23,.63),(-.12,.08))
+crystal((ax+.56,ay+.26,az+.26),.88,.22,(.12,.62,.45),(.14,0))
+crystal((ax+.12,ay-.38,az+.25),.62,.21,(.64,.30,.18),(.09,-.07))
+# The open crescent conducts a ribbon of light around the central mineral cluster.
+arc=[]
+for i in range(33):
+    a=math.pi*.10+i/32*math.pi*1.55
+    arc.append((ax+math.cos(a)*1.04,ay+.39,az+1.02+math.sin(a)*1.04))
+tube(metal,arc,.045,.045,7,40,color=(.44,.28,.14),ridge=0)
+tube(lights,[(x,y-.028,z) for x,y,z in arc],.013,.013,4,40,color=(.27,.62,1),ridge=0)
+for i in range(3):
+    a=3.50+i*.72;x=ax+math.cos(a)*1.17;y=ay+math.sin(a)*1.17
+    tube(masonry,[(x,y,az+.20),(x,y,az+.60)],.13,.10,10,4,color=(.29,.32,.35),ridge=0)
+    ellipsoid(slate,(x,y,az+.64),(.21,.17,.07),(.07,.13,.19),10,4)
+    ring(lights,(x,y,az+.66),.13,.009,[(.5,.25,.85),(.08,.7,.55),(.95,.4,.16)][i],segments=24)
+# Low curling ferns repeat the tree's organic forms, grounding the mineral display.
+for i in range(8):
+    a=i*math.tau/8;p=Vector((ax+math.cos(a)*1.45,ay+math.sin(a)*1.10,az+.08))
+    for j in range(3):rounded_leaf(p+Vector((math.cos(a)*j*.07,math.sin(a)*j*.07,.06+j*.07)),.2,Vector((math.cos(a),math.sin(a),.8)),(.07,.24,.19))
+
+# REALM III: a story threshold — a ruined gate, wayfinder, and miniature landscape.
+ex,ey,ez=-.55,-4.15,1.35
+cradle((ex,ey,ez),1.82,1.25,[(1.07,.12,1.6),(.65,-1.9,.75),(.0,-2.7,.0)])
+island((ex,ey,ez),1.82,1.25)
+# A paved path has a real destination: it runs across this island and INTO its gate.
+for row in range(5):
+    for col in range(3):
+        block(masonry,(ex+(col-1)*.31,ey-.95+row*.34,ez+.105),(.285,.30,.12),(.29+.018*col,.32+.012*row,.31),.03*math.sin(row))
+# A horseshoe arch assembled from voussoirs, resting on two stone piers.
+gate_y=ey+.24
+for side in (-1,1):
+    for j in range(4):
+        block(masonry,(ex+side*.85,gate_y,ez+.24+j*.27),(.30,.40,.265),(.31+.012*j,.35+.015*j,.34+.01*j),side*.015)
+    block(stones,(ex+side*.88,gate_y,ez+.13),(.51,.53,.18),(.22,.27,.28))
+arc=[]
+for i in range(23):
+    a=i/22*math.pi;arc.append((ex+math.cos(a)*.86,gate_y,ez+1.04+math.sin(a)*.88))
+tube(masonry,arc,.175,.175,8,30,color=(.33,.37,.36),ridge=.015)
+tube(metal,[(x,y-.21,z) for x,y,z in arc],.027,.027,5,30,color=(.5,.31,.12),ridge=0)
+# Recessed portal surface: dark at the rim, saturated light toward its distant center.
+ps=len(portal.v);portal.vertex((ex,gate_y+.10,ez+1.0),(.04,.25,.33))
+for i in range(32):
+    a=i/32*math.tau
+    portal.vertex((ex+math.cos(a)*.69,gate_y+.10,ez+.99+math.sin(a)*.85),(.016,.05,.13))
+for i in range(32):portal.f.append((ps,ps+1+i,ps+1+(i+1)%32))
+ring(lights,(ex,gate_y-.06,ez+1.04),.63,.015,(.15,.52,.75),'Y',48)
+for i in range(11):
+    a=i*2.399;r=.12+(.035*i)
+    gem(lights,(ex+math.cos(a)*r,gate_y-.08,ez+1.03+math.sin(a)*r),.015,(.22,.65,.82))
+# A broken wall and rooted young tree imply a landscape beyond the portal.
+for j in range(3):
+    for k in range(3-j):block(stones,(ex+1.23,ey+.24+k*.29,ez+.17+j*.24),(.37,.27,.23),(.20,.25,.24),.04*j)
+sprout=(ex-1.23,ey+.43,ez+.10)
+tube(wood,[sprout,(sprout[0]-.08,sprout[1],sprout[2]+.6),(sprout[0]+.05,sprout[1]+.08,sprout[2]+1.12)],.085,.014,7,14,color=(.24,.16,.09))
+crown((sprout[0]+.04,sprout[1]+.05,sprout[2]+1.1),.43,45)
+# A suspended banner remains attached at both the mast and crossbar.
+bx,by=ex+1.1,ey-.8
+tube(metal,[(bx,by,ez+.10),(bx,by,ez+1.3)],.025,.022,6,4,color=(.33,.22,.1),ridge=0)
+tube(metal,[(bx-.20,by,ez+1.24),(bx+.22,by,ez+1.24)],.016,.016,5,3,color=(.33,.22,.1),ridge=0)
+block(slate,(bx,by,ez+.97),(.38,.035,.50),(.055,.14,.17))
+gem(sap,(bx,by-.035,ez+.96),.067,(1,.52,.12))
+
 # Small rear ruin and meadow details add scale without introducing competing worlds.
 for i in range(5):
     a=i*.27+.4;x=1+math.cos(a)*2.55;y=math.sin(a)*2.1
@@ -348,11 +447,11 @@ for strand in range(9):
         for side in (-1,1):river.vertex(p+Vector((side*.043,0,0)),(.15,.48,.48,alpha))
         if j:river.f.append((start+(j-1)*2,start+(j-1)*2+1,start+j*2+1,start+j*2))
 
-objects=[wood.object('Yggdrasil | sculpted heartwood',bark),foliage.object('Yggdrasil | oval clustered canopy',leaves),sap.object('Yggdrasil | golden sap paths',vein),lights.object('Observatory | living light',teal),stones.object('Islands | weathered strata',rock),river.object('Cascade | falling veil',water),metal.object('Observatory | brass instruments',bronze),masonry.object('Observatory | stone arcade',ivory),moss.object('Islands | moss cushions',mossmat),slate.object('Observatory | enamel and folio',slatemat)]
-for ob in (objects[4],objects[7]):
+objects=[wood.object('Yggdrasil | sculpted heartwood',bark),foliage.object('Yggdrasil | oval clustered canopy',leaves),sap.object('Yggdrasil | golden sap paths',vein),lights.object('Realms | living light',teal),stones.object('Islands | weathered strata',rock),river.object('Cascade | falling veil',water),metal.object('Realms | brass instruments',bronze),masonry.object('Realms | carved stone',ivory),moss.object('Islands | moss cushions',mossmat),slate.object('Realms | enamel and folio',slatemat),crystals.object('Sanctuary | faceted minerals',crystalmat),portal.object('Threshold | distant light',portalmat)]
+for ob in (objects[4],objects[7],objects[10]):
     for p in ob.data.polygons:p.use_smooth=False
 leaves.use_backface_culling=False
-for name,location in [('Realm_Programming',(cx,cy,cz+1.4)),('Tree_Heart',(1,0,3.7))]:
+for name,location in [('Realm_Programming',(-4.65,-.45,4.05)),('Realm_Art',(5.3,-.25,5.05)),('Realm_Experiences',(-.55,-4.15,2.55)),('Tree_Heart',(1,0,3.7))]:
     ob=bpy.data.objects.new(name,None);asset.objects.link(ob);ob.location=location;ob['semantic_anchor']=True
 
 def area(name,loc,color,power,size,target=(0,0,3)):
@@ -366,11 +465,11 @@ scene=bpy.context.scene;scene.world.use_nodes=True
 scene.world.node_tree.nodes['Background'].inputs[0].default_value=(.016,.025,.055,1)
 scene.world.node_tree.nodes['Background'].inputs[1].default_value=.35
 d=bpy.data.cameras.new('Camera');cam=bpy.data.objects.new('CAM | three realms composition',d);stage.objects.link(cam)
-cam.location=(10,-26,12);target=Vector((-.35,0,3.5));cam.rotation_euler=(target-cam.location).to_track_quat('-Z','Y').to_euler();cam.data.type='ORTHO';cam.data.ortho_scale=20.2;scene.camera=cam
+cam.location=(7,-28,12);target=Vector((.25,-.3,3.5));cam.rotation_euler=(target-cam.location).to_track_quat('-Z','Y').to_euler();cam.data.type='ORTHO';cam.data.ortho_scale=20.2;scene.camera=cam
 scene.render.engine='BLENDER_EEVEE';scene.eevee.use_gtao=True;scene.eevee.gtao_distance=2.3;scene.eevee.gtao_factor=1.32;scene.eevee.use_bloom=True;scene.eevee.bloom_intensity=.095;scene.eevee.taa_render_samples=64
 scene.view_settings.view_transform='Filmic';scene.view_settings.look='Medium High Contrast';scene.view_settings.exposure=.25
 scene.render.resolution_x=1600;scene.render.resolution_y=1400;scene.render.resolution_percentage=100;scene.render.image_settings.file_format='PNG';scene.render.film_transparent=True
-scene['asset_notes']='Original Blender prototype: Yggdrasil + one completed programming realm. Ten merged materials. No third-party geometry. Built for web, no external provider.'
+scene['asset_notes']='Original Blender scene: Yggdrasil and three root-cradled realms. Twelve merged materials, four semantic anchors. No third-party geometry.'
 bpy.ops.object.select_all(action='DESELECT')
 for ob in asset.objects:ob.select_set(True)
 bpy.context.view_layer.objects.active=objects[0]
@@ -378,11 +477,13 @@ bpy.ops.wm.save_as_mainfile(filepath=str(OUT/'Yggdrasil_Three_Realms.blend'))
 def export(path):
     bpy.ops.export_scene.gltf(filepath=str(path),export_format='GLB',use_selection=True,export_yup=True,export_apply=True,export_colors=True,export_tangents=True,export_extras=True,export_cameras=False,export_lights=False,export_draco_mesh_compression_enable=True,export_draco_mesh_compression_level=6,export_draco_position_quantization=14)
 export(OUT/'yggdrasil-realms.glb')
-stats={'meshes':len(objects),'materials':10,'triangles':sum(sum(len(p.vertices)-2 for p in ob.data.polygons) for ob in objects),'bytes':(OUT/'yggdrasil-realms.glb').stat().st_size}
+stats={'meshes':len(objects),'materials':12,'triangles':sum(sum(len(p.vertices)-2 for p in ob.data.polygons) for ob in objects),'bytes':(OUT/'yggdrasil-realms.glb').stat().st_size}
 (OUT/'metrics.json').write_text(json.dumps(stats,indent=2))
 scene.render.filepath=str(OUT/'composition.png');bpy.ops.render.render(write_still=True)
 scene.render.image_settings.file_format='WEBP';scene.render.image_settings.quality=86;bpy.data.images['Render Result'].save_render(str(OUT/'composition.webp'),scene=scene)
 cam.location=(-9,-14,8);cam.rotation_euler=(Vector((-4.2,0,3.8))-cam.location).to_track_quat('-Z','Y').to_euler();cam.data.ortho_scale=6.8
 scene.render.resolution_x=1300;scene.render.resolution_y=1100;scene.render.image_settings.file_format='PNG';scene.render.filepath=str(OUT/'observatory-detail.png');bpy.ops.render.render(write_still=True)
+for title,center,loc in [('sanctuary',(5.3,-.25,4.65),(10,-12,8)),('threshold',(-.55,-4.15,2.35),(4,-16,7))]:
+    cam.location=loc;cam.rotation_euler=(Vector(center)-cam.location).to_track_quat('-Z','Y').to_euler();cam.data.ortho_scale=6.8;scene.render.filepath=str(OUT/(title+'-detail.png'));bpy.ops.render.render(write_still=True)
 print('REALMS_METRICS '+json.dumps(stats))
 

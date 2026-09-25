@@ -1,12 +1,14 @@
 {
   "file": "yggdrasil-realms.glb",
-  "sha256": "014fa05a053a1ee50b9ebeb9b9efca7fb2239440b1c24b2e24e1d5010c5beeb7",
-  "meshes": 10,
-  "triangles": 102086,
-  "bytes": 1226732,
+  "sha256": "c76f3d503c4f24a81130cb8e861a5deda060061bdb797225f15d00ffe9f53670",
+  "meshes": 12,
+  "triangles": 119342,
+  "bytes": 1370372,
   "finite_coordinates": true,
   "anchors": [
     "Realm_Programming",
+    "Realm_Art",
+    "Realm_Experiences",
     "Tree_Heart"
   ],
   "policy": {
