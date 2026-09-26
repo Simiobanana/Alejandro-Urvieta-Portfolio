@@ -16,7 +16,7 @@ export default function Study({projects}:{projects:StoredProject[]}){
  const [view,setView]=useState<View>('tree'),[night,setNight]=useState(true),[motion,setMotion]=useState(false),[status,setStatus]=useState<RealmStatus>('loading');
  const selected=view==='tree'?null:realms[view],realmProjects=view==='tree'?[]:projects.filter(project=>projectRealm(project)===view);
  useEffect(()=>{const media=matchMedia('(prefers-reduced-motion:reduce)');const sync=()=>setMotion(!media.matches);sync();media.addEventListener('change',sync);return()=>media.removeEventListener('change',sync);},[]);
- const selectRealm=(realm:View)=>{setView(realm);setPose(n=>n+1);};
+ const selectRealm=(realm:View)=>{setView(current=>realm==='tree'||current===realm?'tree':realm);setPose(n=>n+1);};
  return <main className="realm-study" lang="es" data-night={night} data-motion={motion} data-world={view}>
   <header className="study-header"><Link href="/#work" prefetch={false}><ArrowLeft size={15}/> Portafolio</Link><span>AU <i/> LOS TRES REINOS</span><button aria-label={night?'Cambiar a día':'Cambiar a noche'} onClick={()=>setNight(!night)}>{night?<Sun size={17}/>:<Moon size={17}/>}</button></header>
   <div className="study-layout">
