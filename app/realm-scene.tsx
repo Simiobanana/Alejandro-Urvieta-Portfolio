@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from 'react';
-import { realms, type RealmStatus, type RealmView } from '@/lib/portfolio-realms';
+import { realmIds, realms, type RealmId, type RealmStatus, type RealmView } from '@/lib/portfolio-realms';
 
 export type RealmSceneProps = {
   view: RealmView;
@@ -9,18 +9,21 @@ export type RealmSceneProps = {
   motion: boolean;
   pose: number;
   onStatus: (status: RealmStatus) => void;
+  onSelect?: (realm: RealmId) => void;
   className?: string;
   label?: string;
   active?: boolean;
 };
 
-export default function RealmScene({ view, night, motion, pose, onStatus, className, label, active = true }: RealmSceneProps) {
+export default function RealmScene({ view, night, motion, pose, onStatus, onSelect, className, label, active = true }: RealmSceneProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const state = useRef({ view, night, motion, pose, active });
   const statusCallback = useRef(onStatus);
+  const selectCallback = useRef(onSelect);
   const wake = useRef<() => void>(() => {});
 
   useEffect(() => { statusCallback.current = onStatus; }, [onStatus]);
+  useEffect(() => { selectCallback.current = onSelect; }, [onSelect]);
   useEffect(() => {
     state.current = { view, night, motion, pose, active };
     wake.current();
@@ -58,6 +61,9 @@ export default function RealmScene({ view, night, motion, pose, onStatus, classN
         renderer.toneMappingExposure = 1.25;
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = T.PCFShadowMap;
+        // The tree and lights stay in place; leaf sway does not need a full shadow pass.
+        renderer.shadowMap.autoUpdate = false;
+        renderer.shadowMap.needsUpdate = true;
         const scene = new T.Scene(), camera = new T.PerspectiveCamera(36, 1, .1, 100);
         camera.position.set(10, 12, 26);
         const target = new T.Vector3(-.35, 3.5, 0);
@@ -87,6 +93,50 @@ export default function RealmScene({ view, night, motion, pose, onStatus, classN
         disposers.push(() => decoder.dispose());
         const loader = new GLTFLoader(); loader.setDRACOLoader(decoder);
         const resource: {model?: import('three').Group} = {};
+        const raycaster = new T.Raycaster(), pointer = new T.Vector2();
+        const hitBounds = realmIds.map(id => {
+          const center = new T.Vector3().fromArray(realms[id].hitCenter);
+          const size = new T.Vector3().fromArray(realms[id].hitHalfSize).multiplyScalar(2);
+          return { id, box: new T.Box3().setFromCenterAndSize(center, size) };
+        });
+        const pickRealm = (event: PointerEvent, precise: boolean): RealmId | null => {
+          if (!resource.model || !state.current.active || !selectCallback.current) return null;
+          const rect = canvas.getBoundingClientRect();
+          pointer.set((event.clientX - rect.left) / rect.width * 2 - 1, 1 - (event.clientY - rect.top) / rect.height * 2);
+          raycaster.setFromCamera(pointer, camera);
+          const candidates = hitBounds.filter(({box}) => raycaster.ray.intersectsBox(box));
+          if (!candidates.length) return null;
+          if (!precise) return candidates[0].id;
+          // Meshes are merged by material. Identify the visible surface by its world-space bounds.
+          const hit = raycaster.intersectObject(resource.model, true)[0];
+          return hit ? candidates.find(({box}) => box.containsPoint(hit.point))?.id ?? null : null;
+        };
+        let pressed: {id:number;x:number;y:number;moved:boolean} | null = null;
+        const pointerDown = (event: PointerEvent) => {
+          if (!event.isPrimary || event.button !== 0) { pressed = null; return; }
+          pressed = {id:event.pointerId,x:event.clientX,y:event.clientY,moved:false};
+        };
+        const pointerMove = (event: PointerEvent) => {
+          if (pressed && Math.hypot(event.clientX - pressed.x,event.clientY - pressed.y) > (event.pointerType === 'mouse' ? 7 : 12)) pressed.moved = true;
+          if (event.pointerType === 'mouse') canvas.style.cursor = pressed?.moved ? 'grabbing' : pickRealm(event,false) ? 'pointer' : 'grab';
+        };
+        const pointerUp = (event: PointerEvent) => {
+          const tap = pressed; pressed = null;
+          if (!tap || tap.id !== event.pointerId || tap.moved || Math.hypot(event.clientX - tap.x,event.clientY - tap.y) > 12) return;
+          const id = pickRealm(event,true);
+          if (id) selectCallback.current?.(id);
+        };
+        const pointerCancel = () => { pressed = null; canvas.style.cursor = coarse.matches ? 'auto' : 'grab'; };
+        canvas.addEventListener('pointerdown', pointerDown, {passive:true});
+        canvas.addEventListener('pointermove', pointerMove, {passive:true});
+        canvas.addEventListener('pointerup', pointerUp, {passive:true});
+        canvas.addEventListener('pointercancel', pointerCancel, {passive:true});
+        canvas.addEventListener('pointerleave', pointerCancel, {passive:true});
+        disposers.push(() => {
+          canvas.removeEventListener('pointerdown',pointerDown); canvas.removeEventListener('pointermove',pointerMove);
+          canvas.removeEventListener('pointerup',pointerUp); canvas.removeEventListener('pointercancel',pointerCancel);
+          canvas.removeEventListener('pointerleave',pointerCancel);
+        });
         const disposeModel = (object: import('three').Group) => {
           const geometries = new Set<import('three').BufferGeometry>();
           const materials = new Set<import('three').Material>(), textures = new Set<import('three').Texture>();
@@ -101,7 +151,10 @@ export default function RealmScene({ view, night, motion, pose, onStatus, classN
           geometries.forEach(g => g.dispose()); materials.forEach(m => m.dispose()); textures.forEach(t => t.dispose());
         };
         disposers.push(() => { if (resource.model) disposeModel(resource.model); });
-        let frame = 0, last = 0, visible = true, dirty = true, flight = true, ready = false;
+        const interval = 1000 / 60;
+        let frame = 0, last = 0, lastTick = 0, accumulated = interval, visible = true, dirty = true, flight = true, ready = false;
+        const maxDpr = Math.min(devicePixelRatio, mobile ? 1.25 : 1.7);
+        let pixelRatio = maxDpr, qualityMs = 0, qualityFrames = 0, stableWindows = 0;
         let currentView: RealmView = 'tree', currentPose = state.current.pose, blend = 1, seconds = 0;
         const destination = new T.Vector3(), aim = new T.Vector3(), waterClock = { value: 0 };
         const shouldRender = () => ready && !released && !contextLost && visible && !document.hidden && state.current.active;
@@ -127,30 +180,61 @@ export default function RealmScene({ view, night, motion, pose, onStatus, classN
           controls.enabled = state.current.active && !coarse.matches;
           controls.enableRotate = !coarse.matches;
           dirty = true;
-          if (!shouldRender()) { cancelAnimationFrame(frame); frame = 0; last = 0; }
+          if (!shouldRender()) { cancelAnimationFrame(frame); frame = 0; last = 0; lastTick = 0; accumulated = interval; }
           else schedule();
         };
+        let sampleStart = 0, sampleFrames = 0, sampleSubmitMs = 0;
         const draw = (now: number) => {
           frame = 0;
           if (!shouldRender()) return;
-          if (now - last < 1000 / 30) { schedule(); return; }
-          const dt = last ? Math.min((now - last) * .001, .05) : 0; last = now;
+          // Keep the remainder so 60/120/144 Hz displays do not lose cadence to rounding.
+          accumulated += lastTick ? now - lastTick : 0; lastTick = now;
+          if (accumulated + .5 < interval) { schedule(); return; }
+          accumulated = Math.max(0, accumulated - interval * Math.max(1, Math.floor((accumulated + .5) / interval)));
+          const elapsed = last ? now - last : 1000 / 60;
+          const dt = Math.min(elapsed * .001, .1); last = now;
+          if (state.current.motion && !reduced.matches) {
+            qualityMs += Math.min(elapsed,100); qualityFrames++;
+            if (qualityMs >= 1500) {
+              const average = qualityMs / qualityFrames;
+              stableWindows = average < 19 ? stableWindows + 1 : 0;
+              // Averages also recover sharpness on 90/144 Hz displays with alternating intervals.
+              const nextRatio = average > 25 ? Math.max(.8,pixelRatio - .2) : stableWindows >= 4 ? Math.min(maxDpr,pixelRatio + .1) : pixelRatio;
+              if (nextRatio !== pixelRatio) { pixelRatio = nextRatio; renderer.setPixelRatio(pixelRatio); stableWindows = 0; dirty = true; }
+              qualityMs = 0; qualityFrames = 0;
+            }
+          }
           const animate = state.current.motion && !reduced.matches;
           if (currentView !== state.current.view || currentPose !== state.current.pose) {
             currentView = state.current.view; currentPose = state.current.pose; flight = true; dirty = true; desired();
           }
           const goal = state.current.night ? 1 : 0;
           const lighting = Math.abs(goal - blend) > .001;
-          if (lighting) { blend += (goal - blend) * (animate ? .07 : 1); dirty = true; }
+          if (lighting) { blend += (goal - blend) * (animate ? 1 - Math.exp(-4.5 * dt) : 1); dirty = true; }
           hemi.intensity = 1.8 - blend * .65; key.intensity = 3.5 - blend * .7;
           rim.intensity = 1.1 + blend * 1.2; scene.environmentIntensity = .4 - blend * .16;
           if (flight) {
-            const step = animate ? .07 : 1;
+            const step = animate ? 1 - Math.exp(-5.5 * dt) : 1;
             camera.position.lerp(destination, step); controls.target.lerp(aim, step); controls.update(); dirty = true;
             if (camera.position.distanceTo(destination) < .008 && controls.target.distanceTo(aim) < .008) flight = false;
           }
           if (animate) { seconds += dt; waterClock.value = seconds; lamp.intensity = 5 + Math.sin(seconds * .8) * .35; dirty = true; }
-          if (dirty) { renderer.render(scene, camera); dirty = false; }
+          if (dirty) {
+            const started = performance.now();
+            renderer.render(scene, camera); dirty = false;
+            if (process.env.NODE_ENV !== 'production') {
+              sampleSubmitMs += performance.now() - started; sampleFrames++;
+              if (!sampleStart) sampleStart = now;
+              if (now - sampleStart >= 2000) {
+                canvas.dataset.fps = (sampleFrames * 1000 / (now - sampleStart)).toFixed(1);
+                canvas.dataset.submitMs = (sampleSubmitMs / sampleFrames).toFixed(2);
+                canvas.dataset.drawCalls = String(renderer.info.render.calls);
+                canvas.dataset.triangles = String(renderer.info.render.triangles);
+                canvas.dataset.pixelRatio = String(pixelRatio);
+                sampleStart = now; sampleFrames = 0; sampleSubmitMs = 0;
+              }
+            }
+          }
           if (animate || flight || lighting) schedule();
         };
         wake.current = refresh;
@@ -161,7 +245,12 @@ export default function RealmScene({ view, night, motion, pose, onStatus, classN
           camera.aspect = Math.max(1, box.width) / Math.max(1, box.height); camera.updateProjectionMatrix();
           desired(); flight = true; refresh();
         };
-        const ro = new ResizeObserver(resize); disposers.push(() => ro.disconnect()); ro.observe(canvas); resize();
+        let resizeFrame = 0;
+        const ro = new ResizeObserver(() => {
+          cancelAnimationFrame(resizeFrame);
+          resizeFrame = requestAnimationFrame(() => { resizeFrame = 0; if (!released) resize(); });
+        });
+        disposers.push(() => { ro.disconnect(); cancelAnimationFrame(resizeFrame); }); ro.observe(canvas); resize();
         const io = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; refresh(); });
         disposers.push(() => io.disconnect()); io.observe(canvas);
         const change = () => { dirty = true; schedule(); }, start = () => { flight = false; };
@@ -202,7 +291,7 @@ export default function RealmScene({ view, night, motion, pose, onStatus, classN
             }
           }
         });
-        scene.add(model); desired(); camera.position.copy(destination); controls.target.copy(aim); controls.update();
+        scene.add(model); renderer.shadowMap.needsUpdate = true; desired(); camera.position.copy(destination); controls.target.copy(aim); controls.update();
         ready = true;
         if (shouldRender()) renderer.render(scene, camera);
         statusCallback.current('ready'); refresh();

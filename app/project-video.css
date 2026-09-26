@@ -1,0 +1,14 @@
+.project-video{position:relative;width:100%;background:#080a13;isolation:isolate;--video-accent:var(--world-color,var(--project-accent,#d8bd83))}
+.project-video video{display:block;width:100%;height:auto;object-fit:contain}
+.project-video .project-video-play{position:absolute;z-index:2;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:13px;width:max-content;max-width:calc(100% - 36px);height:auto;min-height:64px;padding:9px 24px 9px 9px;border:1px solid color-mix(in srgb,var(--video-accent) 65%,#fff);border-radius:80px;background:#080a13e8;color:#fff;box-shadow:0 8px 35px #0005,0 0 32px color-mix(in srgb,var(--video-accent) 18%,transparent);font:500 13px/1.3 var(--font-body,system-ui);letter-spacing:.035em;cursor:pointer;transition:background .2s,border-color .2s,box-shadow .2s}
+.project-video .project-video-play:hover{background:#151a27;border-color:var(--video-accent);box-shadow:0 8px 35px #0005,0 0 36px color-mix(in srgb,var(--video-accent) 30%,transparent)}
+.project-video .project-video-play:focus-visible{outline:2px solid #fff;outline-offset:5px}
+.project-video-play-icon{width:44px;height:44px;flex-shrink:0;display:grid;place-items:center;border-radius:50%;background:var(--video-accent);color:#10131b}
+.project-video-play-icon svg{width:20px;height:20px}
+.project-video-error{position:absolute;bottom:55px;left:16px;right:16px;margin:0;text-align:center;color:#fff;font-size:12px;text-shadow:0 1px 4px #000;background:#080a13b3;padding:6px}
+.world-media-slide .project-video,.world-media-slide .project-video video{height:100%;max-height:none;object-fit:contain}
+/* The cinematic image vignette must never cover native video controls. */
+.world-media-stage[data-media-kind="video"] .world-media-veil{display:none}
+.world-gallery[data-media-kind="video"]{height:auto}
+.world-gallery[data-media-kind="video"] .world-gallery-nav{position:relative;inset:auto;justify-content:flex-end;padding:16px clamp(20px,5vw,80px);background:#080a13}
+@media(prefers-reduced-motion:reduce){.project-video .project-video-play{transition:none}}

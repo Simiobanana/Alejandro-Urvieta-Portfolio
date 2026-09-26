@@ -9,6 +9,7 @@ export const realmIds: RealmId[] = ['programming', 'art', 'experiences'];
 export const realms = {
   programming: {
     number: '01', anchor: 'Realm_Programming', fallback: [-4.65, 4.05, .45], direction: [-3.3, 2.65, 7.7],
+    hitCenter: [-4.65, 3.05, .45], hitHalfSize: [2.05, 1.8, 2.05],
     name: { en: 'The observatory of ideas', es: 'El observatorio de las ideas' },
     short: { en: 'Observatory', es: 'Observatorio' },
     discipline: { en: 'Programming & tools', es: 'Programación y herramientas' },
@@ -19,6 +20,7 @@ export const realms = {
   },
   art: {
     number: '02', anchor: 'Realm_Art', fallback: [5.3, 5.05, .25], direction: [3.3, 2.8, 7.7],
+    hitCenter: [5.3, 4.05, .25], hitHalfSize: [1.9, 1.9, 1.9],
     name: { en: 'The sanctuary of matter', es: 'El santuario de la materia' },
     short: { en: 'Sanctuary', es: 'Santuario' },
     discipline: { en: 'Technical art & VFX', es: 'Arte técnico y VFX' },
@@ -29,6 +31,7 @@ export const realms = {
   },
   experiences: {
     number: '03', anchor: 'Realm_Experiences', fallback: [-.55, 2.55, 4.15], direction: [1.4, 2.45, 8.2],
+    hitCenter: [-.55, 1.85, 4.15], hitHalfSize: [2.05, 1.8, 2.05],
     name: { en: 'The threshold of stories', es: 'El umbral de las historias' },
     short: { en: 'Threshold', es: 'Umbral' },
     discipline: { en: 'Games & experiences', es: 'Videojuegos y experiencias' },
