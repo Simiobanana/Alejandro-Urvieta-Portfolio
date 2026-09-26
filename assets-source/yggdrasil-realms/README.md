@@ -17,7 +17,9 @@ Presupuesto: máximo 120.000 triángulos, 1,6 MB de GLB y doce materiales. La co
 
 ## Vista web
 
-Ruta independiente `/yggdrasil-study`, excluida de indexación por robots. No reemplaza la página principal. Su componente está en `app/yggdrasil-study/`.
+Integrado en la vista inmersiva del portafolio principal (`/#work`) mediante `app/realm-explorer.tsx`. La ruta `/yggdrasil-study` se conserva como referencia independiente y está excluida de indexación por robots. Ambas vistas comparten el renderizador `app/realm-scene.tsx` y las definiciones de reinos en `lib/portfolio-realms.ts`.
+
+La página principal utiliza el idioma, día/noche, efectos, categorías, colores y orden del contenido del editor existente. Los proyectos se abren en sus casos completos sin perder el reino seleccionado. La vista ligera utiliza el render WebP de esta misma composición y puede elegirse manualmente. Las posiciones X/Y del árbol anterior se conservan en el editor como datos de la versión anterior y no alteran los anclajes de esta escena.
 
 Renderizado WebGL con sombras, entorno de iluminación, transición de cámara a cada reino y modo día/noche. Cada reino muestra proyectos del contenido público existente y enlaza a sus casos completos. Máximo 30 fotogramas por segundo, resolución limitada, pausa fuera de pantalla, control de efectos y respeto por movimiento reducido. El control táctil permite desplazamiento vertical: la rotación manual se reserva al ratón. El render WebP es la alternativa si WebGL no funciona. No se garantiza una velocidad idéntica en todos los equipos.
 

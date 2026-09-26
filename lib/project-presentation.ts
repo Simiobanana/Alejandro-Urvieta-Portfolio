@@ -9,6 +9,7 @@ export const categoryLabels: Record<ProjectCategory,{en:string;es:string}> = {
 };
 
 export function normalizeCategory(project: Pick<StoredProject,"title"|"category">): ProjectCategory {
+  if (Object.prototype.hasOwnProperty.call(categoryLabels, project.category)) return project.category as ProjectCategory;
   const title=project.title.toLowerCase(),category=project.category.toLowerCase();
   if(category.includes("web")||title.includes("há kai")||title.includes("ká hai")||title.includes("ka hai"))return "Web Programming";
   if(category==="pure art"||title.includes("shield")||title.includes("environment"))return "Pure Art";
