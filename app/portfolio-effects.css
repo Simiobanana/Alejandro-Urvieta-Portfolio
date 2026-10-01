@@ -119,8 +119,16 @@ body{font-family:var(--font-body),Manrope,sans-serif}.portfolio-v2{--night:#0b0e
  .tree-view-tools{bottom:14px;right:16px}
 }
 .island-mist{mask-image:radial-gradient(ellipse,#000 24%,transparent 72%)}
-.portfolio-v2[data-presentation="standard"] .cosmic-journey>.interactive-stars{height:100svh}
-.portfolio-v2[data-presentation="standard"] .standard-work{position:relative;z-index:1;background:var(--bg)}
+/* One viewport-sized sky continues behind the full project list without a tall canvas. */
+.portfolio-v2[data-presentation="standard"]{overflow:clip}
+.portfolio-v2[data-presentation="standard"] .cosmic-journey{--standard-intro-height:max(100svh,620px);background:linear-gradient(#060915 0%,#101831 40%,#080c18 66%,#000 100%) top/100% var(--standard-intro-height) no-repeat #000}
+.portfolio-v2[data-presentation="standard"] .cosmic-journey>.interactive-stars{position:sticky;inset:auto;top:0;display:block;height:100svh;margin-bottom:-100svh}
+.portfolio-v2[data-presentation="standard"] .cosmic-intro{z-index:1}
+.portfolio-v2[data-presentation="standard"] .standard-work{position:relative;z-index:1;background:transparent}
+.portfolio-v2[data-presentation="standard"] .standard-work>header h2{color:#f4f8ff}
+.portfolio-v2[data-presentation="standard"] .standard-work>header p{color:#b8c4d5}
+.portfolio-v2[data-presentation="standard"] .cosmic-journey:after{content:"";position:absolute;z-index:0;inset:auto 0 0;height:140px;background:linear-gradient(transparent,var(--bg));pointer-events:none}
+@media(max-width:560px){.portfolio-v2[data-presentation="standard"] .cosmic-journey{--standard-intro-height:max(100svh,560px)}}
 @media(min-width:701px){
  .ygg-scene .hotspot-label{width:clamp(86px,9vw,125px);max-width:clamp(86px,9vw,125px)}
  .ygg-scene .hotspot-label[data-placement="above"]{top:auto;bottom:calc(100% - 2px)}
